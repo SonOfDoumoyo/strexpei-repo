@@ -1,27 +1,19 @@
-import './App.css'
-//import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import SignUp from './pages/Signup'
-import Home from './pages/Home'
-import Header from './components/header'
-
-function App() {
-
-  const HomePage = () => (
-      <>
-        <Header />
-        <Home />
-      </>
-  );
+import Login from "./pages/Login";
+import Header from "./components/Header";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
+function App () {
 
   return (
     <Router>
       <Routes>
-        <Route path='/' element={<SignUp />} />
-        <Route path='/home' element={<HomePage />}/>
+        <Route element={<Layout/>}>
+          <Route path="/" element={<Login />}/>
+        </Route>
+        <Route path="/Header" element={<Header />}/>
       </Routes>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;

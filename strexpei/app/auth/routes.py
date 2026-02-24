@@ -151,16 +151,14 @@ async def creating_account(request: Request ,bg_tasks: BackgroundTasks, signup_d
             
         
 
-@auth_router.post('/sign_in')
-async def login(request: Request, login_data: LoginModel, session: AsyncSession = Depends(get_session), account_status: str = Depends(AccountStatus())):
-    email = login_data.email
+@auth_router.get('/sign_in/{email}/{password}')
+async def login(email: str, password: str, request: Request, session: AsyncSession = Depends(get_session)):
     user = await auth_service.get_user_by_email(email, session)
     
     if not user:
         raise UserNotFound()
     
     fetched_password = user.password
-    password = login_data.password
     
     
     valid_password = verify_password(password, fetched_password)
