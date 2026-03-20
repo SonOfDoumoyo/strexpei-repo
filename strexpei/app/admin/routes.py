@@ -26,7 +26,7 @@ async def get_users(session: AsyncSession = Depends(get_session)):
     if not users:
         users = 'No users yet'
         
-    return {"users":[users]}
+    return {"users":[AllUsersModel.model_validate(users)]}
 
 
 @admin_router.post('/suspend_account')

@@ -1,4 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from typing import Optional
+import uuid
 from datetime import datetime
 from enum import Enum
 
@@ -54,3 +56,17 @@ class StatusModel(str, Enum):
     banned = 'banned'
     pending = 'pending'
     deleted = "deleted"
+
+class NotificationModel(BaseModel):
+    nid: uuid.UUID 
+    title: str 
+    message: str 
+    timestamp: datetime
+    isRead: bool
+    sender_id: uuid.UUID 
+    sender: Optional[UserModel]
+    receiver: Optional[UserModel]
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )

@@ -1,7 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, delete
+from sqlalchemy.orm import selectinload
 from ...config import Config
 from .utils import generate_password_hash
+from ..auth.redis import save_password_reset_otp
 from .auth_schema import (
     SignUpModel,
     LoginModel,
@@ -15,12 +17,16 @@ import uuid
 from ..db.models import (
     User,
     Company,
-    Staff
+    Staff,
+    RequestJoin,
+    Notification
 )
 from datetime import datetime, timedelta
 from ...errors import(
     UserNotFound
 )
+from ..auth.redis import redis_client
+from ..admin.admin_schema import AllUsersModel
 import secrets
 
 class AuthService:
@@ -37,10 +43,18 @@ class AuthService:
     
     #function to get user by uid   
     async def get_user_by_uid(self, uid: uuid.UUID, session: AsyncSession):
+        statement = select(User).options(selectinload(User.staffs).selectinload(Staff.company), selectinload(User.staffs).selectinload(Staff.company).selectinload(Company.manager), selectinload(User.companies), selectinload(User.companies).selectinload(Company.request), selectinload(User.companies).selectinload(Company.request).selectinload(RequestJoin.creator), selectinload(User.staffs).selectinload(Staff.company).selectinload(Company.staffs), selectinload(User.request).selectinload(RequestJoin.company), selectinload(User.request).selectinload(RequestJoin.company).selectinload(Company.manager), selectinload(User.sent), selectinload(User.sent).selectinload(Notification.receiver), selectinload(User.received), selectinload(User.received).selectinload(Notification.receiver)).where(User.uid == uid)
+        result = await session.execute(statement)
+        user = result.unique().scalars().first()
+        
+        return user
+
+      
+    async def get_user_abstract(self, uid: uuid.UUID, session: AsyncSession):
         
         statement = select(User).where(User.uid == uid)
         result = await session.execute(statement)
-        user = result.scalars().first()
+        user = result.unique().scalars().first()
         
         return user
      
@@ -95,14 +109,14 @@ class AuthService:
             
             
     async def update_user(self, uid: uuid.UUID, user_data: dict, session: AsyncSession):
-        existing_user = await self.get_user_by_uid(uid, session)
+        existing_user = await self.get_user_abstract(uid, session)
         
             
         if not existing_user:
             return None
             
         try:
-            allowed_fields = {'firstname', 'lastname', 'email', 'password', 'phone', 'role', 'verified', 'status', 'deleted_at', 'purge_at'}
+            allowed_fields = {'firstname', 'lastname', 'email', 'password', 'phone', 'role', 'verified', 'status', 'deleted_at', 'purge_at', 'received'}
                 
             for k, v in user_data.items():
                 if k in allowed_fields:
@@ -122,7 +136,7 @@ class AuthService:
     #function to update user details/creds
     async def update_credentials(self, uid: uuid.UUID, update_data: UserUpdateModel, session: AsyncSession):
         
-        existing_user = await self.get_user_by_uid(uid, session)
+        existing_user = await self.get_user_abstract(uid, session)
         
         if existing_user:
             try:
@@ -200,10 +214,7 @@ class AuthService:
         return device_info['device']
                 
     
-def verify_email_html(verification_link: str, request: Request) -> str:
-    
-    current_host = request.client.host
-    link = f"http://{Config.DOMAIN}/api/v1.0/auths/verify/{verification_link}"
+def verify_email_html(request: Request, otp: str, name: str) -> str:
     
     return f"""
         <!DOCTYPE html>
@@ -230,15 +241,15 @@ def verify_email_html(verification_link: str, request: Request) -> str:
                   <!-- Body -->
                   <tr>
                     <td style="color:#374151; font-size:16px; line-height:1.6;">
-                      <p>Hi 👋,</p>
+                      <p>Hi {name},</p>
         
                       <p>
-                        You’re almost in. Please confirm your email address to activate your
+                        Use the code below to verify your
                         <strong>Strexpei</strong> account.
                       </p>
         
                       <p style="text-align:center; margin:30px 0;">
-                        <a href="{link}"
+                        <p
                            style="
                              background-color:#2563eb;
                              color:#ffffff;
@@ -248,12 +259,12 @@ def verify_email_html(verification_link: str, request: Request) -> str:
                              font-weight:bold;
                              display:inline-block;
                            ">
-                          Verify my email
-                        </a>
+                          {otp}
+                        </p>
                       </p>
         
                       <p>
-                        This link will expire in <strong>24 hours</strong>.
+                        This code will expire in <strong>5 minutes. Do not share it with anyone</strong>.
                         If you didn’t create a Strexpei account, you can safely ignore this email.
                       </p>
         
@@ -360,5 +371,44 @@ def account_verified_html(login_link: str) -> str:
         
 async def generate_otp():
     otp = str(secrets.randbelow(900000) + 100000)
+    return otp
+
+
+async def can_resend(user_id):
+    cooldown_key = f"otp_resend_cooldown:{user_id}"
+    resend_count_key = f"otp_resend_count:{user_id}"
+
+    #check cooldown (30 sec between resends)
+    if await redis_client.exists(cooldown_key):
+        ttl = await redis_client.ttl(cooldown_key)
+        return False, {"message":f"Please wait {ttl} seconds before resending", "seconds":ttl}
+    
+    #checks max resend attempts (e.g, max 3 per 10 mins)
+    count = await redis_client.get(resend_count_key)
+    if count and int(count) >= 3:
+        return False, f"Max resend attempts reached. Try again in 10 minutes"
+    
+    return True, None
+
+async def resend_otp(user_id, email):
+    allowed, message = await can_resend(user_id)
+
+    if not allowed:
+        return {"success": False, "message": message}
+    
+    #Generate new OTP (invalidates old one)
+    otp = await generate_otp()
+    await save_password_reset_otp(user_email=email, otp=otp, expiry_seconds=300)
+
+    #STore OTP with 5min expiry
+    await redis_client.setex(f"otp:{user_id}", 300, otp)
+
+    #set cooldown (30sec)
+    await redis_client.setex(f"otp_resend_cooldown:{user_id}", 60, 1)
+
+    #Increment resend counter (expires in 10 mins)
+    await redis_client.incr(f"otp_resend_count:{user_id}")
+    await redis_client.expire(f"otp_resend_count:{user_id}", 600)
+
     return otp
 

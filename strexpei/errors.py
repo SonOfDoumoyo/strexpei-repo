@@ -149,6 +149,9 @@ class CompanyDeletedError(StrexpeiException):
 class ExistingStaffConflict(StrexpeiException):
     """Raises an error for existing company staff that tries to join company agian"""
 
+class RequestNotSent(StrexpeiException):
+    """Raises an error for request not sent"""
+
 
 
 
@@ -209,6 +212,17 @@ def register_all_errors(app: FastAPI):
             initial_detail={
                 "message":"already a staff member of company",
                 "error_message":"existing_staff_member"
+            },
+        ),
+    )
+
+    app.add_exception_handler(
+        RequestNotSent,
+        create_exception_handler(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            initial_detail={
+                "message":"request not sent",
+                "error_message":"request_not_sent"
             },
         ),
     )
@@ -302,7 +316,7 @@ def register_all_errors(app: FastAPI):
         create_exception_handler(
             status_code=status.HTTP_400_BAD_REQUEST,
             initial_detail={
-                "message":"Invalid email or password",
+                "message":"Invalid email or password, check email and try again",
                 "error_code":"inalid_email_or_password"
             },
         ),
@@ -531,7 +545,7 @@ def register_all_errors(app: FastAPI):
         create_exception_handler(
             status_code=status.HTTP_400_BAD_REQUEST,
             initial_detail={
-                "message":"Invalid or expired OTP provided",
+                "message":"OTP is invalid or has expired. Please request a new one.",
                 "error_code":"invalid_otp"
             },
         ),
@@ -542,7 +556,7 @@ def register_all_errors(app: FastAPI):
         create_exception_handler(
             status_code=status.HTTP_400_BAD_REQUEST,
             initial_detail={
-                "message":"max attempts reached",
+                "message":"Too many incorrect attempts. Please request a new code.",
                 "error_code":"max_otp_attempts"
             }
         )
@@ -554,7 +568,7 @@ def register_all_errors(app: FastAPI):
         create_exception_handler(
             status_code=status.HTTP_400_BAD_REQUEST,
             initial_detail={
-                "message":"Invalid OTP provided",
+                "message":"Incorrect code. Please try again.",
                 "error_code":"invalid_otp"
             }
         )

@@ -18,7 +18,8 @@ from ...errors import (
     InvalidToken,
     ExistingStaffConflict,
     StaffNotFound,
-    InvalidBankDetails
+    InvalidBankDetails,
+    RequestNotSent
 )
 from ..db.models import User
 import asyncio
@@ -59,6 +60,14 @@ async def get_all_staffs(session: AsyncSession = Depends(get_session)):
      
     return {'staffs':staffs}
 
+@staff_router.get('/get_staff_comps')
+async def get_users_companies(user: dict = Depends(get_current_user)):
+    user_id = user.uid
+
+    all_comps = await staff_service.get_all_user_companies(uid=user_id, session=session)
+    return { 'all_comps':all_comps }
+
+
 @staff_router.get('/request_status/{cid}')
 async def check_request_status(cid: uuid.UUID):
     pass
@@ -87,7 +96,7 @@ async def accept_join_request(token: str, session: AsyncSession = Depends(get_se
     user_id = token_details['user_id']
     company_id = token_details['company_id']
 
-    valid_user = await auth_service.get_user_by_uid(uid=user_id, session=session)
+    valid_user = await auth_service.get_user_abstract(uid=user_id, session=session)
 
     if not valid_user:
         raise UserNotFound()
@@ -97,7 +106,8 @@ async def accept_join_request(token: str, session: AsyncSession = Depends(get_se
     if not valid_company:
         raise CompanyNotFound()
     
-    add_staff = await staff_service.add_staff_to_company(user_details=valid_user, cid=valid_company.cid, role=token_details['position'], session=session)
+    add_staff = await staff_service.add_staff_to_company(user_details=valid_user, cid=valid_company.cid, role=token_details['role'], session=session)
+    update_request_status = await staff_service.update_request_detail(token=token, update_details={'status':'accepted'}, session=session)
 
     return JSONResponse(
         content={
@@ -105,14 +115,31 @@ async def accept_join_request(token: str, session: AsyncSession = Depends(get_se
         },
         status_code=status.HTTP_201_CREATED
     )
+
+
+@staff_router.get('reject_request/{token}')
+async def decline_join_request(token: str, session: AsyncSession = Depends(get_session)):
+    token_details = decode_url_safe_token(token)
+
+    if not token_details:
+        raise InvalidToken()
     
+    update_request_status = await staff_service.update_request_detail(token=token, update_details={'status':'rejected'}, session=session)
+
+    return JSONResponse(
+        content={
+            'message':f'request declined successfully'
+        },
+        status_code=status.HTTP_204_NO_CONTENT
+
+    )
 
 @staff_router.post('/join_request_company')
 async def request_to_join_organization(bg_tasks: BackgroundTasks, request_info: JoinRequestStaffModel, token_details: dict = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session)):
      
     token_user_id = token_details['user']['user_uid']
 
-    valid_user = await auth_service.get_user_by_uid(uid=token_user_id, session=session)
+    valid_user = await auth_service.get_user_abstract(uid=token_user_id, session=session)
 
     if not valid_user:
         raise UserNotFound()
@@ -133,10 +160,6 @@ async def request_to_join_organization(bg_tasks: BackgroundTasks, request_info: 
     
     request_dict_data = request_info.model_dump_json()
     send_data['request_data'] = request_dict_data
-
-    print(send_data)
-
-    token = create_url_safe_token(send_data)
     
     email, verified_company = await staff_service.get_manager_by_company(cid=company_id, session=session)
     
@@ -163,6 +186,10 @@ async def request_to_join_organization(bg_tasks: BackgroundTasks, request_info: 
         body=body
     )
     bg_tasks.add_task(retry_email, message=message)
+
+    new_request = await staff_service.new_request_details(token=token, request_details=request_info, user_id=valid_user.uid, session=session)
+    if not new_request:
+        raise RequestNotSent()
 
     return JSONResponse(
         content={

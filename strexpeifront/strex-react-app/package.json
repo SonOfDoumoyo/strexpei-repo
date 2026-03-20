@@ -10,7 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/archivo-black": "^5.2.8",
+    "@fontsource/gravitas-one": "^5.2.8",
     "@fontsource/poppins": "^5.2.7",
+    "@fontsource/roboto-slab": "^5.2.8",
+    "@fontsource/sn-pro": "^5.2.6",
     "axios": "^1.13.5",
     "boxicons": "^2.1.4",
     "react": "^19.2.0",

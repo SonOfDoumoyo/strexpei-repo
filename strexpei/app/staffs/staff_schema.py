@@ -25,17 +25,52 @@ class JoinRequestStaffModel(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+class RequestStaffModel(BaseModel):
+    request_id: uuid.UUID 
+    company_id: uuid.UUID 
+    company_name: str 
+    position: str 
+    company_email: str
+    status: str
+    token: str 
+    expires_at: datetime
+    revoked: bool
+    revoked_at: datetime | None = None
+    created_at: datetime 
+    created_by: uuid.UUID
+    creator: Optional[UserModel]
+    company: Optional[CompanyModel]
+
+    model_config = ConfigDict(from_attributes=True)
+
+class AbstractRequestStaffModel(BaseModel):
+    request_id: uuid.UUID 
+    company_id: uuid.UUID 
+    company_name: str 
+    position: str 
+    company_email: str
+    status: str
+    token: str 
+    expires_at: datetime
+    revoked: bool
+    revoked_at: datetime | None = None
+    created_at: datetime 
+    created_by: uuid.UUID
+
+    model_config = ConfigDict(from_attributes=True)
+
 class StaffAbstractModel(BaseModel):
     sid: uuid.UUID
     firstname: str 
     lastname: str
     salary: str
     position: str
-    accountname: str | None 
-    accountnumber: str | None 
-    bankname: str | None 
-    bankcode: str | None
-    valid_account: bool | None
+    accountname: str | None = None
+    accountnumber: str | None = None
+    bankname: str | None = None
+    bankcode: str | None = None
+    valid_account: bool | None = None
     updated_at: datetime 
     created_at: datetime
 
@@ -65,17 +100,17 @@ class StaffModel(BaseModel):
     lastname: str
     salary: str
     position: str
-    accountname: str | None 
-    accountnumber: str | None 
-    bankname: str | None 
-    bankcode: str | None
-    valid_account: bool | None 
+    accountname: str | None = None
+    accountnumber: str | None = None
+    bankname: str | None = None
+    bankcode: str | None = None
+    valid_account: bool | None  = None
     pay_receipts: List[str] 
     updated_at: datetime 
     created_at: datetime
     is_deleted: bool 
-    deleted_at: datetime | None 
-    purge_at: datetime | None 
+    deleted_at: datetime | None = None
+    purge_at: datetime | None = None
     user: Optional[UserModel]
     company: Optional[CompanyModel]
 

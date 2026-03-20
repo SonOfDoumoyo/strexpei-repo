@@ -20,6 +20,21 @@ class ManagerModel(BaseModel):
     phone: str
     role: str
 
+class StaffAbstractModel(BaseModel):
+    sid: uuid.UUID
+    firstname: str 
+    lastname: str
+    salary: str
+    position: str
+    accountname: str | None 
+    accountnumber: str | None 
+    bankname: str | None 
+    bankcode: str | None
+    valid_account: bool | None
+    updated_at: datetime 
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 class CompanyModel(BaseModel):
     cid: uuid.UUID 
@@ -33,13 +48,15 @@ class CompanyModel(BaseModel):
     purge_at: Optional[datetime] = None 
     created_at: datetime
     manager: Optional[UserModel] 
-    #staffs: List["Staff"]
+    staffs: List[StaffAbstractModel]
     
     model_config = ConfigDict(from_attributes=True)
     
     
 class ResponseCompanyModel(BaseModel):
     company: List[CompanyModel]
+
+    model_config = ConfigDict(from_attributes=True)
     
 
 class CreateInviteModel(BaseModel):

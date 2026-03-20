@@ -10,6 +10,7 @@ from ..auth.auth_schema import (
     UserUpdateModel
 )
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 from fastapi import Request
 from user_agents import parse
 from ...config import Config
@@ -52,12 +53,10 @@ class CompanyService:
         
         
     async def get_company_by_uid(self, uid: uuid.UUID, session: AsyncSession):
-        
-        statement = select(Company).where(Company.manager_id == uid)
+        statement = (select(Company).where(Company.manager_id == uid).options(selectinload(Company.manager),))
         result = await session.execute(statement)
-        company = result.scalars().all()
-        
-        return company
+        companies = result.scalars().all()
+        return companies
     
 
     #async def get_company_email(self, cid: uuid.UUID, session: AsyncSession):
@@ -183,7 +182,7 @@ class CompanyService:
             now = datetime.now(timezone.utc)
             expiry_date = invite_data.expires_at
             
-            if expiry_date < now:
+            if expiry_date <= now:
                 
                 update_invite = {
                     'revoked':True,

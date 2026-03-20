@@ -43,7 +43,7 @@ async def verify_otp(user_email: str, otp_input: str) -> bool:
 async def save_password_reset_otp(user_email: str, otp: str, expiry_seconds: int = 60):
     key = f"otp:reset:{user_email}"
     
-    await redis_client.hset(key, mapping={"otp": otp, "attempts":0})
+    await redis_client.hset(key, mapping={"otp": otp, "attempts":"0"})
     await redis_client.expire(key, expiry_seconds)
 
     
@@ -60,8 +60,8 @@ async def verify_password_reset_otp(user_email: str, otp_input: str):
     if not otp:
         return False, "OTP expired or invalid"
 
-    attempts = int(attempts or 0)
-    print(attempts)
+    attempts = int(attempts) if attempts else 0
+    
     if attempts >= MAX_ATTEMPTS:
         await redis_client.delete(key)
         return False, "Maximum OTP attempts exceeded"

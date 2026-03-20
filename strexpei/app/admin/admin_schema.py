@@ -1,7 +1,10 @@
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from ..company.company_schema import CompanyModel
+from ..staffs.staff_schema import StaffAbstractModel, RequestStaffModel, AbstractRequestStaffModel
 from datetime import datetime
 import uuid
 from typing import List, Optional
+from ..auth.auth_schema import NotificationModel
 
 
 class AllCompanyModel(BaseModel):
@@ -11,6 +14,8 @@ class AllCompanyModel(BaseModel):
     position: str
     updated_at: datetime 
     created_at: datetime
+    staffs: List[StaffAbstractModel]
+    request: List[AbstractRequestStaffModel]
     
     model_config= ConfigDict(
         from_attributes=True
@@ -26,13 +31,14 @@ class AllStaffsModel(BaseModel):
     lastname: str
     salary: str 
     position: str
-    accountname: str
-    accountnumber: str 
-    bankname: str
-    bankcode: str 
+    accountname: str | None = None
+    accountnumber: str | None = None
+    bankname: str | None = None
+    bankcode: str | None = None
     pay_receipts: List[str]
     updated_at: datetime 
     created_at: datetime
+    company: Optional[CompanyModel]
     
     model_config= ConfigDict(
         from_attributes=True
@@ -55,6 +61,9 @@ class AllUsersModel(BaseModel):
     purge_at: datetime | None
     companies: List[AllCompanyModel]
     staffs: List[AllStaffsModel]
+    request: List[RequestStaffModel]
+    sent: List[NotificationModel]
+    received: List[NotificationModel]
     
     model_config= ConfigDict(
         from_attributes=True

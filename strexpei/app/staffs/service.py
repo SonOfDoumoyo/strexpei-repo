@@ -15,13 +15,15 @@ from fastapi import Request
 from user_agents import parse
 from ...config import Config
 import uuid
-from .staff_schema import StaffModel, GetAllStaffModel, UpdateAccountDetModel
+from .staff_schema import StaffModel, GetAllStaffModel, UpdateAccountDetModel, JoinRequestStaffModel
 from ..db.models import (
     User,
     Company,
-    Staff
+    Staff,
+    RequestJoin,
+    Notification
 )
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from ...errors import(
     UserNotFound
 )
@@ -30,6 +32,8 @@ import secrets
 
 auth_service = AuthService()
 company_service = CompanyService()
+
+EXPIRY = datetime.now(timezone.utc) + timedelta(hours=72)
 
 class StaffService:
     
@@ -47,6 +51,12 @@ class StaffService:
         result = await session.execute(statement)
         staff = result.scalars().first()
         return staff
+    
+    async def get_all_user_companies(self, uid: UUID, session: AsyncSession):
+        stmt = await session.execute(select(Staff).where(Staff.user_id == uid))
+        result = stmt.scalars().all()
+
+        return result
     
 
     async def get_all_staffs(self, session: AsyncSession):
@@ -118,8 +128,104 @@ class StaffService:
         except Exception as e:
             await session.rollback()
             raise e
-
+        
     
+    async def new_request_details(self,token: str, request_details: JoinRequestStaffModel, user_id: uuid.UUID, session: AsyncSession):
+        try:
+
+            valid_user = await auth_service.get_user_abstract(uid=user_id, session=session)
+            valid_company = await company_service.get_company_by_cid(cid=request_details.company_id, session=session)
+            request_data = request_details.model_dump()
+            request_data['token'] = token
+            request_data['expires_at'] = EXPIRY
+
+            new_req_table = RequestJoin(
+                **request_data
+            )
+
+            new_req_table.created_by = valid_user.uid
+            new_req_table.created_at = datetime.now(timezone.utc)
+            new_req_table.creator = valid_user
+            new_req_table.company = valid_company
+            
+            session.add(new_req_table)
+            await session.commit()
+            await session.refresh(new_req_table)
+
+            company_admin = await auth_service.get_user_abstract(uid=valid_company.manager_id, session=session)
+
+            notify = {
+                "title":"New Staff Join Request",
+                "message":f"{valid_user.firstname} - I'm a staff member of this company and would like to be added as a {new_req_table.position}",
+                "sender_id":valid_user.uid,
+                "receiver_id": company_admin.uid,
+            }
+
+            new_notification = Notification(
+                **notify
+            )
+
+            new_notification.sender = valid_user
+            new_notification.receiver = company_admin
+
+            #await auth_service.update_user(uid=company_admin.uid, user_data={'received':new_notification}, session=session)
+
+            session.add(new_notification)
+            await session.commit()
+            await session.refresh(new_notification)
+
+            return True
+
+        except Exception as e:
+            await session.rollback()
+            raise e
+        
+
+    async def get_user_request(self, token: str, session: AsyncSession):
+
+        statement = select(RequestJoin).where(RequestJoin.token == token)
+        response = await session.execute(statement)
+
+        result = response.scalars().first()
+
+        return result
+
+
+    async def update_request_detail(self, token: str, update_details:dict, session: AsyncSession):
+        try:
+
+            request = await self.get_user_request(token=token, session=session)
+
+            if not request:
+                return False
+            
+            if request.expires_at >= datetime.now(timezone.utc):
+                
+                update_request = {
+                    'revoked':True,
+                    'revoked_at':datetime.now(timezone.utc)
+                }
+                for k,v in update_request.items():
+                    setattr(request, k, v)
+                
+                await session.commit()
+                await session.refresh(request)
+                return None
+            
+            allowed_updates = ['status']
+
+            for k, v in update_details.items():
+                if k in allowed_updates:
+                    setattr(request, k, v)
+
+            await session.commit()
+            await session.refresh(request)
+
+            return True
+
+        except Exception as e:
+            await session.rollback()
+            raise e
         
     async def add_staff_to_company(self, user_details: UserModel, cid: uuid.UUID, role: str, session: AsyncSession):
         try:
@@ -165,7 +271,8 @@ class StaffService:
         company_name = details['company_name']
         staff_role = details['staff_role']
         accept_url = f"http://{Config.DOMAIN}/api/v1.0/staffs/accept_request/{token}"
-        decline_url = None
+        decline_url = f"http://{Config.DOMAIN}/api/v1.0/staff/reject_request/{token}"
+
         return f"""
             <!DOCTYPE html>
             <html>

@@ -8,69 +8,41 @@ from ..auth.redis import token_in_blocklist
 from ..db.session_ini import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from .service import AuthService
-from typing import List, Any
+from typing import List, Any, Dict
+from ..admin.admin_schema import AllUsersModel
 from ...errors import AccountNotVerified, InsufficientPermission, ExpiredToken, InvalidAuthorizationCredentials, RefreshTokenRequired, AccessTokenRequired, InvalidToken, RevokedToken, CompanyTokenRequired, InactiveAccount, AccountBannedError, AccountDeletedError, AccountPendingError, AccountSuspendedError
 
 auth_service = AuthService()
 
-class TokenBearer(HTTPBearer):
-    
-    #setting auto error to True
-    def __init__(self, auto_error=True):
-        super().__init__(auto_error=auto_error)
-    
-    #setting the call function
-    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
+
+class AccessTokenBearer:
+    """Reads access token from Authorization: Bearer <token>"""
+    async def __call__(self, request: Request) -> Dict[str, Any]:
+        auth = request.headers.get("Authorization")
+        if not auth or not auth.lower().startswith("bearer"):
+            print("Aythorization:", request.headers.get("Authorization"))
+            raise HTTPException(status_code=401, detail="Missing bearer token")
         
-        
-        creds = await super().__call__(request)
-        
-        if not creds:
-            raise InvalidAuthorizationCredentials()
-        
-        token = creds.credentials
-        token_data = self.token_valid(token)
-        
-        if not token_data:
-            raise InvalidToken()
-        
-        if await token_in_blocklist(token_data['jti']):
-            raise RevokedToken()
-            
-        self.verify_token_data(token_data)
-        
-        return token_data
-            
-    
-    #checks if the token is a valid one
-    def token_valid(self, token: str) -> Any:
-        token_data = decode_token(token)
-        
-        return token_data if token_data is not None else False
-     
-    #verifies the token data
-    def verify_token_data(self, token_data):
-        raise NotImplementedError('Please overide this method in child class')
-        
-class AccessTokenBearer(TokenBearer):
-    
-    def verify_token_data(self, token_data: dict) ->None:
-        if token_data['refresh']:
+        token = auth.split(" ", 1)[1].strip()
+        data = decode_token(token)
+
+        if data.get("type") != "access":
             raise AccessTokenRequired()
-            
 
-class RefreshTokenBearer(TokenBearer):
-    
-    def verify_token_data(self, token_data: dict) ->None:
-        if not token_data['refresh']:
+        return data
+
+class RefreshTokenBearer:
+    """Reads refresh token form HttpOnly cookie"""
+    async def __call__(self, request: Request) -> Dict[str, Any]:
+        token = request.cookies.get("refresh_token")
+        if not token:
+            print("Authorization:", request.cookies.get("refresh_token"))
+            raise HTTPException(status_code=401, detail="Missing refresh cookie")
+        
+        data = decode_token(token)
+        if data.get("type") != "refresh":
             raise RefreshTokenRequired()
-
-
-class CompanyTokenBearer(TokenBearer):
-    
-    def verify_token_data(self, token_data: dict) ->None:
-        if not token_data['company']:
-            raise CompanyTokenRequired()
+        return data
     
 
 async def get_current_user(token_details: dict = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session)):
@@ -78,7 +50,17 @@ async def get_current_user(token_details: dict = Depends(AccessTokenBearer()), s
     user_id = token_details['user']['user_uid']
     user = await auth_service.get_user_by_uid(user_id, session)
     
-    return user
+    return AllUsersModel.model_validate(user)
+
+async def require_session(request: Request):
+    refresh_token = request.cookies.get("refresh_token")
+
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    #validates session-id 
+    return refresh_token
+
+
 
 class AccountStatus:
 

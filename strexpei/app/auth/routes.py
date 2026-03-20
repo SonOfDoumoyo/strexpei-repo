@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, status, Form, Request
+from fastapi import APIRouter, Depends, BackgroundTasks, status, Form, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
-from .service import AuthService, verify_email_html, account_verified_html, generate_otp
+from .service import AuthService, verify_email_html, account_verified_html, generate_otp, resend_otp
 from .auth_schema import SignUpModel, LoginModel, PasswordResetModel, StatusModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..db.session_ini import get_session
@@ -19,6 +19,7 @@ from ...errors import(
     AccountDeletedError,
     ExpiredToken
 )
+from ..admin.admin_schema import AllUsersModel
 import logging
 import asyncio
 import uuid
@@ -58,6 +59,11 @@ async def retry_email(message, n:int = 10):
                 await asyncio.sleep(2 ** attempt)
     logging.error("All retry attempts failed")            
     return "unsuccessful"
+
+
+@auth_router.get("/current_user")
+async def fetch_current_user(user: dict = Depends(get_current_user)):
+    return user
         
     
 @auth_router.get("/refresh_access")
@@ -90,25 +96,37 @@ async def access_token_refresh(request: Request, token_details: dict = Depends(R
     raise AccountSuspendedError()
     
 
-@auth_router.get('/verify/{token}')
-async def verify_account(token: str, session: AsyncSession = Depends(get_session)):
+@auth_router.post('/verify/{email}/{otp_code}')
+async def verify_account(email: str, otp_code: str, session: AsyncSession = Depends(get_session)):
     
-    
-    token_data = decode_url_safe_token(token)
-    user_email = token_data
+    user_email = email
     
     if user_email:
         account_to_verify = await auth_service.get_user_by_email(user_email, session)
+        
         if not account_to_verify:
             raise UserNotFound()
+        
+        verify_otp, message = await verify_password_reset_otp(email, otp_code)
+        if message == "OTP expired or invalid":
+            raise InvalidOtpCode()
     
+        if message == "Maximum OTP attempts exceeded":
+            raise MaxOtpAttempts()
+            
+        if message == "Invalid OTP":
+            raise WrongOtp()
+        
         uid = account_to_verify.uid
         
-        await auth_service.update_user(uid, {"verified":True}, session)
-        await auth_service.update_user(uid, {'status':'active'}, session)
-        respond = account_verified_html(login_link="haha")
+        await auth_service.update_user(uid, {"verified":True, "status":"active"}, session)
         
-        return HTMLResponse(respond, status_code=status.HTTP_200_OK)
+        return JSONResponse(
+            content={
+                "message":"verified"
+                },
+            status_code=status.HTTP_200_OK
+        )
     
     return JSONResponse(
         content={
@@ -116,7 +134,49 @@ async def verify_account(token: str, session: AsyncSession = Depends(get_session
         },
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
-            
+
+
+@auth_router.post('/otp_resend/{email}')
+async def resend_ver_otp(request: Request, email: str, bg_tasks: BackgroundTasks, session: AsyncSession = Depends(get_session)):
+
+    user = await auth_service.get_user_by_email(email=email, session=session)
+    if not user:
+        raise UserNotFound()
+    
+    otp = await resend_otp(user_id=user.uid, email=email)
+
+    if isinstance(otp, dict) and not otp.get("success"):
+        return JSONResponse(
+            content={
+                "allowed":otp.get("success"),
+                "message":otp.get("message"),
+            }
+        )
+    
+    html_body = verify_email_html(request=request, otp=otp, name=user.firstname)
+        
+    email = user.email
+    subject= f"Your verification code: {otp}"
+    body = html_body
+
+    
+    await save_password_reset_otp(user_email=email, otp=str(otp), expiry_seconds=300)
+        
+    message = create_message(
+        recipients=[email],
+        subject=subject,
+        body=body
+    )
+    bg_tasks.add_task(retry_email, message=message)
+    
+    return JSONResponse(
+        content={
+            "code":str(otp),
+            "success": True,
+            "message": "Account created. Check your email to verify."
+        },
+        status_code=status.HTTP_201_CREATED
+    )            
         
     
 @auth_router.post('/sign_up')
@@ -129,11 +189,15 @@ async def creating_account(request: Request ,bg_tasks: BackgroundTasks, signup_d
     
        
     token = create_url_safe_token(signup_data.email)
-    html_body = verify_email_html(verification_link=token, request=request)
+    otp = await generate_otp()
+    html_body = verify_email_html(request=request, otp=otp, name=signup_data.firstname)
         
     email = signup_data.email
-    subject= "Verify your email to activate your Strexpei account"
+    subject= f"Your verification code: {otp}"
     body = html_body
+
+    
+    await save_password_reset_otp(user_email=email, otp=otp, expiry_seconds=300)
         
     message = create_message(
         recipients=[email],
@@ -144,15 +208,16 @@ async def creating_account(request: Request ,bg_tasks: BackgroundTasks, signup_d
     
     return JSONResponse(
         content={
+            "code":str(otp),
+            "success": True,
             "message": "Account created. Check your email to verify."
         },
         status_code=status.HTTP_201_CREATED
-    )
-            
+    )            
         
 
 @auth_router.get('/sign_in/{email}/{password}')
-async def login(email: str, password: str, request: Request, session: AsyncSession = Depends(get_session)):
+async def login(response: Response, email: str, password: str, request: Request, session: AsyncSession = Depends(get_session)):
     user = await auth_service.get_user_by_email(email, session)
     
     if not user:
@@ -218,7 +283,7 @@ async def login(email: str, password: str, request: Request, session: AsyncSessi
         await store_refresh_token(access_data['user_uid'], payload, device)
         
             
-        return JSONResponse(
+        resp = JSONResponse(
             content={
                 "message":"login successful",
                 "access_token":access_token,
@@ -230,10 +295,32 @@ async def login(email: str, password: str, request: Request, session: AsyncSessi
             },
             status_code=status.HTTP_200_OK
         )
+
+        resp.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            path="/",
+            max_age=7 * 24 * 60 * 60
+        )
+
+        return resp
         
         
     raise InvalidCredentials()
-        
+
+
+@auth_router.post('/logout')
+async def logout_current_user(user: dict = Depends(RefreshTokenBearer())):
+    response = JSONResponse(
+        content={
+            'message': 'Logged out successfully'
+        },
+        status_code=status.HTTP_204_NO_CONTENT
+    )
+    response.delete_cookie("refresh_token")
     
     
 @auth_router.post('/reset_password/{email}')

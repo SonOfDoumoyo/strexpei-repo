@@ -1,0 +1,119 @@
+.work-screen {
+    position: relative;
+}
+
+.work-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+}
+
+.logo-box {
+    position: absolute;
+    display: flex;
+    top: 20%;
+    justify-content: center;
+    align-items: center;
+    padding: 0%;
+}
+
+.logo-box h1 {
+    font-size: 2.7em;
+    font-weight: bolder;
+    font-family: "Poppins";
+    font-weight: bolder;
+}
+
+.log {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: auto;
+    width: 12em;
+    margin: 0;
+    padding: 0;
+}
+
+.join-create {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    width: 70%;
+    margin: 3em;
+    top: 30%;
+}
+
+.join-create button {
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    height: 7vh;
+    width: 30%;
+    display: flex;
+    font-size: 1.7em;
+}
+
+
+.line-box {
+    width: 100%;
+    position: relative;
+    background: transparent;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.line-box .line {
+    background: transparent;
+    height: 1px;
+    opacity: 0.13;
+
+}
+
+.line-box .left-line {
+    top: 0%;
+    position: absolute;
+    display: flex;
+    right: 0;
+    width: 45%;
+}
+
+.line-box .right-line {
+    top: 0%;
+    position: absolute;
+    display: flex;
+    left: 0;
+    width: 45%;
+}
+
+.line-box p {
+    position: relative;
+    font-size: 1.7em;
+    top: -15%;
+    opacity: 0.15;
+    text-align: center;
+    left: 0%;
+    transform: translateX(-5%);
+}
+
+.line-box .exit-btn {
+    width: 6vw;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 100%;
+    text-align: center;
+    margin-top: 1em;
+}
+
+.line-box .bx-log-out {
+    font-size: 1.5em;
+    cursor: pointer;
+    font-weight: 900;
+}

@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from datetime import datetime
 import uuid
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship as sa_relationship
 
 
 
@@ -26,6 +27,9 @@ class User(SQLModel, table=True):
     purge_at: datetime | None = Field(default=None)
     companies: List["Company"] = Relationship(back_populates='manager', sa_relationship_kwargs = {'lazy':'selectin','cascade':'all, delete-orphan'})
     staffs: List["Staff"] = Relationship(back_populates='user', sa_relationship_kwargs = {'lazy':'selectin'})
+    request: List["RequestJoin"] = Relationship(back_populates='creator', sa_relationship_kwargs = {'lazy':'selectin'})
+    sent: List["Notification"] = Relationship( sa_relationship=sa_relationship("Notification", back_populates='sender', lazy='selectin', foreign_keys="[Notification.sender_id]"))
+    received: List["Notification"] = Relationship( sa_relationship=sa_relationship("Notification", back_populates='receiver', lazy='selectin', foreign_keys="[Notification.receiver_id]"))
     
     def __repr__(self):
         return f'<User {self.email}>'
@@ -61,6 +65,7 @@ class Company(SQLModel, table=True):
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False, server_default=func.now()))
     manager: Optional[User] = Relationship(back_populates='companies')
     staffs: List["Staff"] = Relationship(back_populates='company', sa_relationship_kwargs = {'lazy':'selectin', 'cascade':'all, delete-orphan', 'passive_deletes':True})
+    request: List["RequestJoin"] = Relationship(back_populates='company', sa_relationship_kwargs= {'lazy': 'selectin', 'cascade':'all, delete-orphan', 'passive_deletes':True})
     
     def __repr__(self):
         return f'<Company {self.company_name}>'
@@ -109,3 +114,32 @@ class Invite(SQLModel, table=True):
     revoked_at: datetime | None = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=None))
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False, server_default=func.now()))
     created_by: uuid.UUID = Field(default=None, foreign_key='users.uid')
+
+class RequestJoin(SQLModel, table=True):
+    __tablename__='requests'
+    request_id: uuid.UUID = Field(sa_column=Column(pg.UUID(as_uuid=True), nullable=False, primary_key=True), default_factory=uuid.uuid4)
+    company_id: uuid.UUID = Field(pg.UUID(as_uuid=True), nullable=False, foreign_key='companies.cid', ondelete="CASCADE")
+    company_name: str = Field(sa_column=Column(String, nullable=False))
+    position: str = Field(sa_column=Column(String, nullable=False))
+    company_email: str = Field(sa_column=Column(String, nullable=False))
+    status: str = Field(sa_column=Column(pg.VARCHAR, nullable=False, server_default="pending"))
+    token: str = Field(sa_column=Column(String, nullable=False))
+    expires_at: datetime | None = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=None))
+    revoked: bool = Field(default=False)
+    revoked_at: datetime | None = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=None))
+    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False, server_default=func.now()))
+    created_by: uuid.UUID = Field(default=None, foreign_key='users.uid')
+    creator: Optional[User] = Relationship(back_populates='request')
+    company: Optional[Company] = Relationship(back_populates='request')
+
+class Notification(SQLModel, table=True):
+    __tablename__='notifications'
+    nid: uuid.UUID = Field(sa_column=Column(pg.UUID(as_uuid=True), nullable=False, primary_key=True), default_factory=uuid.uuid4)
+    title: str = Field(sa_column=Column(String, nullable=False))
+    message: str = Field(sa_column=Column(String, nullable=False))
+    timestamp: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False, server_default=func.now()))
+    isRead: bool = Field(default=False)
+    sender_id: uuid.UUID = Field(default=None, foreign_key='users.uid')
+    receiver_id: uuid.UUID = Field(default=None, foreign_key='users.uid')
+    sender: Optional[User] = Relationship( sa_relationship=sa_relationship("User", back_populates='sent', foreign_keys="[Notification.sender_id]"))
+    receiver: Optional[User] = Relationship( sa_relationship=sa_relationship("User", back_populates='received', foreign_keys="[Notification.receiver_id]"))

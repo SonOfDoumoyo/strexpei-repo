@@ -361,7 +361,21 @@ async def get_all_companies(session: AsyncSession = Depends(get_session)):
     return all_companies
 
 
-@company_router.post('/adding_company')#, #response_model=ResponseCompanyModel)
+@company_router.get('/get_user_company/{uid}', response_model=ResponseCompanyModel)
+async def get_current_users_companies(uid: uuid.UUID, session: AsyncSession = Depends(get_session), user: dict = Depends(AccessTokenBearer())):
+    user_companies = await company_service.get_company_by_uid(uid=uid, session=session)
+    if not user_companies:
+        return JSONResponse(
+            content={
+                'message':'no created company'
+            },
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+    
+    return {"company":user_companies}
+
+
+@company_router.post('/create_company')#, #response_model=ResponseCompanyModel)
 async def add_your_company(request: Request, add_company: AddCompanyModel = Body(...), user_data: dict = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session)):
     
     
