@@ -1,13 +1,11 @@
-import logo from "../assets/images/strexpei-logo.png"
-import "../assets/css/main.css";
-import '../assets/css/verify.css';
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
 import axios from "axios";
-import { setUser } from "../context/userContext";
+// import { setUser } from "../context/userContext";
 import { setAccessToken } from "../hooks/useAuths";
 import { ResendCountdown } from "./coundowner";
+import "../assets/css/verify.css";
 
 function  VerifyAccount() {
 
@@ -90,16 +88,15 @@ function  VerifyAccount() {
         try {
             const codes = otpKeys.map(key => formData[key as keyof typeof formData]).join("");
 
-            const otpVerifyResp = await api.post(`/auths/verify/${ email }/${ codes }`);
+            await api.post(`/auths/verify/${ email }/${ codes }`);
             const response = await api.get(`/auths/sign_in/${ email }/${ password }`);
 
-            setAccessToken(response?.data.access_token)
-            setUser(response?.data.user);
+            setAccessToken(response?.data?.user_id,response?.data.access_token)
 
             
             setIsOtpCorrect(true);
             setOtpWrong(false);
-            navigate('/workspace');
+            navigate(`/${response?.data?.user?.user_id}/workspace`);
 
             
                     
@@ -169,28 +166,33 @@ function  VerifyAccount() {
 
     return (
         <>
-        <div className="screen work-screen">
+        <div className="verify-screen">
             <div className='card work-card'>
-                <img src={logo} alt="Logo" className="log"/>
 
                    
-                <div className='logo-box'>
-                    <h1>Verify Your Strexpei Account</h1>
+                <div className='h1-head'>
+                    <h4>Verify Your <span className="strexpei-span">Strex<span className="Pei-span">Pei</span></span> Account</h4>
                 </div>
 
                 {(error) && (<div className="error-box">
                     <p id="error-msg">{error}</p>
                 </div>)}
+
+                <div className="rings">
+                    <div className="ring ring-1"></div>
+                    <div className="ring ring-2"></div>
+                    <div className="ring ring-3"></div>
+                </div>
                 
                 <div className="otp-message">
-                    <p>We've sent a verification code to your email. </p>
+                    <p className="sent-ver">We've sent a verification code to <span>{email}</span>.</p>
                     <p> Enter the code below to activate your account and continue</p>
                 </div>
                 <form onSubmit={handleSubmit} className="vform-box">
              
 
-                <div className="verify-box input-group">
-                    <div className={`${otpCorrect ? "otp-correct": otpWrong ? "all-red":"otp-boxes"}`}>
+                <div className="verify-box">
+                    <div className={`input-group ${otpCorrect ? "otp-correct": otpWrong ? "all-red":"otp-boxes"}`}>
                         {otpKeys.map((key, index) => (
                             <input 
                                 className="input-otp"

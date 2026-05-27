@@ -28,7 +28,7 @@ from datetime import datetime, timedelta, timezone
 from ...errors import(
     UserNotFound
 )
-from .company_schema import AddCompanyModel, CompanyModel, ResponseCompanyModel, CreateInviteModel, InviteModel
+from .company_schema import AddCompanyModel, CompanyModel, ResponseCompanyModel, CreateInviteModel, InviteModel, UpdateCompanyModel
 import secrets
 
 
@@ -53,7 +53,7 @@ class CompanyService:
         
         
     async def get_company_by_uid(self, uid: uuid.UUID, session: AsyncSession):
-        statement = (select(Company).where(Company.manager_id == uid).options(selectinload(Company.manager),))
+        statement = (select(Company).where(Company.manager_id == uid).options(selectinload(Company.manager)))
         result = await session.execute(statement)
         companies = result.scalars().all()
         return companies
@@ -62,19 +62,45 @@ class CompanyService:
     #async def get_company_email(self, cid: uuid.UUID, session: AsyncSession):
         #statement = select(Company).where(Company.manager.email == )
     
-        
     
-    async def update_company(self, uid: uuid.UUID, user_data: dict, session: AsyncSession):
-        existing_company = await self.get_company_by_uid(uid, session)
+    async def total_Payout(self, cid: uuid.UUID, session: AsyncSession):
+        existing_company = await self.get_company_by_cid(cid, session)
+
+        if not existing_company:
+            return None
+        
+        statement = select(Staff).where(Staff.company_id == cid)
+        result = await session.execute(statement)
+        all_staffs = result.scalars().all()
+
+        total_salary = 0
+
+        for staff in all_staffs:
+            total_salary += staff.salary
+
+        salary_dict = {"totalPayout":str(total_salary)}
+
+        for k, v in salary_dict.items():
+            setattr(existing_company, k, v)
+
+        await session.commit()
+        await session.refresh(existing_company)
+
+        return True
+
+    
+    async def update_company(self, cid: uuid.UUID, user_data: UpdateCompanyModel, session: AsyncSession):
+        existing_company = await self.get_company_by_cid(cid, session)
         
             
         if not existing_company:
             return None
-            
+        
+        user_data_dict = user_data.model_dump(exclude_none=True, exclude_unset=True)
         try:
             allowed_fields = {'is_deleted', 'deleted_at', 'purge_at', 'positon', 'company_name', 'address'}
                 
-            for k, v in user_data.items():
+            for k, v in user_data_dict.items():
                 if k in allowed_fields:
                     setattr(existing_company, k, v)
                     

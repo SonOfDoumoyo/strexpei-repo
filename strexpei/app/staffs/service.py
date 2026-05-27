@@ -27,11 +27,13 @@ from datetime import datetime, timedelta, timezone
 from ...errors import(
     UserNotFound
 )
+from ..users.service import UserService
 import secrets
 
 
 auth_service = AuthService()
 company_service = CompanyService()
+user_service = UserService()
 
 EXPIRY = datetime.now(timezone.utc) + timedelta(hours=72)
 
@@ -113,7 +115,7 @@ class StaffService:
 
         try:
 
-            allowed_overwrites = ['accountname', 'accountnumber', 'bankname', 'bankcode', 'salary', 'recipient_code', 'sub_account']
+            allowed_overwrites = ['accountname', 'accountnumber', 'bankname', 'bankcode', 'salary', 'recipient_code', 'sub_account', 'position']
 
             for k,v in staff_update_dict.items():
                 if k in allowed_overwrites:
@@ -147,6 +149,8 @@ class StaffService:
             new_req_table.created_at = datetime.now(timezone.utc)
             new_req_table.creator = valid_user
             new_req_table.company = valid_company
+            new_req_table.firstname = valid_user.firstname
+            new_req_table.lastname = valid_user.lastname
             
             session.add(new_req_table)
             await session.commit()
@@ -154,25 +158,17 @@ class StaffService:
 
             company_admin = await auth_service.get_user_abstract(uid=valid_company.manager_id, session=session)
 
-            notify = {
-                "title":"New Staff Join Request",
-                "message":f"{valid_user.firstname} - I'm a staff member of this company and would like to be added as a {new_req_table.position}",
-                "sender_id":valid_user.uid,
-                "receiver_id": company_admin.uid,
-            }
-
-            new_notification = Notification(
-                **notify
-            )
-
-            new_notification.sender = valid_user
-            new_notification.receiver = company_admin
-
-            #await auth_service.update_user(uid=company_admin.uid, user_data={'received':new_notification}, session=session)
-
-            session.add(new_notification)
-            await session.commit()
-            await session.refresh(new_notification)
+            notify = await user_service.add_notification(notify_add={
+                    "title":"New Staff Join Request",
+                    "message":f"{valid_user.firstname} - I'm a staff member of this company and would like to be added as a {new_req_table.position}.",
+                    "sender_id":valid_user.uid,
+                    "receiver_id": company_admin.uid,
+                    "sender": valid_user,
+                    "receiver":company_admin
+                }, session=session)
+            
+            if not notify:
+                return False
 
             return True
 
@@ -195,28 +191,50 @@ class StaffService:
         try:
 
             request = await self.get_user_request(token=token, session=session)
+            manager = await auth_service.get_user_by_email(email=request.company_email, session=session)
+            receiver = await auth_service.get_user_abstract(uid=request.created_by, session=session)
 
             if not request:
                 return False
             
-            if request.expires_at >= datetime.now(timezone.utc):
+            # if request.expires_at >= datetime.now(timezone.utc):
                 
-                update_request = {
-                    'revoked':True,
-                    'revoked_at':datetime.now(timezone.utc)
-                }
-                for k,v in update_request.items():
-                    setattr(request, k, v)
+            #     update_request = {
+            #         'revoked':True,
+            #         'revoked_at':datetime.now(timezone.utc)
+            #     }
+            #     for k,v in update_request.items():
+            #         setattr(request, k, v)
                 
-                await session.commit()
-                await session.refresh(request)
-                return None
+            #     await session.commit()
+            #     await session.refresh(request)
+            #     return None
             
             allowed_updates = ['status']
-
+            new_notification = None
             for k, v in update_details.items():
                 if k in allowed_updates:
                     setattr(request, k, v)
+
+                if k == "status" and v == "accepted":
+                    await user_service.add_notification(notify_add={
+                        "title":"Request Approved",
+                        "message":f"Your request to join {request.company_name} has been approved. You can now receive payments on monthly basis.",
+                        "sender_id":manager.uid,
+                        "receiver_id": request.created_by,
+                        "sender": manager,
+                        "receiver": receiver,
+                    }, session=session)
+
+                if k == "status" and v == "rejected":
+                    await user_service.add_notification(notify_add={
+                        "title":"Request Declined",
+                        "message":f"Your request to join {request.company_name} has been reviewed and was not approved. Please contact support if you have any questions.",
+                        "sender_id":manager.uid,
+                        "receiver_id": request.created_by,
+                        "sender": manager,
+                        "receiver": receiver,
+                    }, session=session)
 
             await session.commit()
             await session.refresh(request)

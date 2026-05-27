@@ -7,12 +7,14 @@ from .app.staffs.routes import staff_router
 from .app.manager.routes import manager_router
 from .app.payment.routes import payment_router
 from .app.admin.routes import admin_router
+from .app.workers.routes import worker_router
 from contextlib import asynccontextmanager
 from .app.db.session_ini import init_db, Session
 from .errors import register_all_errors
 from .middleware import register_middleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from .app.auth.service import AuthService
+
 
 
 
@@ -66,3 +68,4 @@ app.include_router(manager_router, prefix=f'/api/{version}/managers', tags=['man
 app.include_router(staff_router, prefix=f'/api/{version}/staffs', tags=['staffs'])
 app.include_router(payment_router, prefix=f'/api/{version}/payments', tags=['payments'])
 app.include_router(admin_router, prefix=f'/api/{version}/admin', tags=['admin'])
+app.include_router(worker_router, prefix=f'/api/{version}/worker', tags=['worker'])

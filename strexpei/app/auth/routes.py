@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, BackgroundTasks, status, Form, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.exceptions import HTTPException
 from .service import AuthService, verify_email_html, account_verified_html, generate_otp, resend_otp
-from .auth_schema import SignUpModel, LoginModel, PasswordResetModel, StatusModel
+from .auth_schema import SignUpModel, LoginModel, PasswordResetModel, StatusModel, LoginRequest, RefreshRequest
+from ..admin.admin_schema import AllUsersModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..db.session_ini import get_session
 from .utils import create_url_safe_token, decode_url_safe_token, verify_password, create_access_token, generate_password_hash, create_refresh_token, refresh_access_token
 from ...mail import create_message, mail
-from .dependencies import AccessTokenBearer, RefreshTokenBearer, get_current_user, AccountStatus
+from .dependencies import AccessTokenBearer, RefreshTokenBearer, get_current_user, get_full_user, LogoutTokenBearer
 from ...errors import(
     UserAlreadyExists,
     UserNotFound,
@@ -26,7 +28,7 @@ import uuid
 from ...config import Config
 import time
 from datetime import timedelta, datetime
-from .redis import verify_password_reset_otp, save_password_reset_otp, store_refresh_token
+from .redis import verify_password_reset_otp, save_password_reset_otp, store_refresh_token, add_jti_to_blocklist
 from ..staffs.service import StaffService
 from ..company.service import CompanyService
 
@@ -43,7 +45,7 @@ auth_router = APIRouter()
 
 
 
-async def retry_email(message, n:int = 10):
+async def retry_email(message, n:int = 1):
     
     for attempt in range(1, n + 1):
         try:
@@ -63,13 +65,16 @@ async def retry_email(message, n:int = 10):
 
 @auth_router.get("/current_user")
 async def fetch_current_user(user: dict = Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not Authenticated")
     return user
         
     
-@auth_router.get("/refresh_access")
-async def access_token_refresh(request: Request, token_details: dict = Depends(RefreshTokenBearer()), session: AsyncSession = Depends(get_session)):
+@auth_router.post("/refresh_access")
+async def access_token_refresh(request: Request,response: Response, token_details: dict = Depends(RefreshTokenBearer()), session: AsyncSession = Depends(get_session)):
     
-    device = auth_service.get_device_info(request)
+    uid = token_details.get("user_uid")
+    device = token_details.get("device")
     user = await auth_service.get_user_by_email(token_details['user_data']['email'], session)
     
     if not user:
@@ -79,16 +84,40 @@ async def access_token_refresh(request: Request, token_details: dict = Depends(R
         new_access_token = await refresh_access_token(
             user=user,
             token_data=token_details,
-            device=device
+            
         )
         if not new_access_token:
             raise InvalidToken()
-            
+        
+        refresh_token, jti, payload = create_refresh_token(
+            user_data = {
+                'email':user.email,
+                'user_uid':str(user.uid),
+                'device':device
+            },
+            refresh = True,
+            expiry = timedelta(days=REFRESH_TOKEN_EXPIRY)
+        )
+
+        await store_refresh_token(str(user.uid), payload, device)
+
+
+        response.set_cookie(
+            key=f"refresh_token_{uid}",
+            value=refresh_token,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            path="/",
+            max_age=7 * 24 * 60 * 60,
+            domain="localhost"
+        )    
         return JSONResponse(
             content={
                 "user":{
                       "email":token_details['user_data']['email'],
-                      "access_token":new_access_token
+                      "access_token":new_access_token,
+                      "user_id":token_details['user_data']['user_uid']
                 },
             },
         )
@@ -187,8 +216,6 @@ async def creating_account(request: Request ,bg_tasks: BackgroundTasks, signup_d
     if not created:
         raise UserAlreadyExists()
     
-       
-    token = create_url_safe_token(signup_data.email)
     otp = await generate_otp()
     html_body = verify_email_html(request=request, otp=otp, name=signup_data.firstname)
         
@@ -213,11 +240,20 @@ async def creating_account(request: Request ,bg_tasks: BackgroundTasks, signup_d
             "message": "Account created. Check your email to verify."
         },
         status_code=status.HTTP_201_CREATED
-    )            
+    )  
+
+
+@auth_router.get('/get/{email}')
+async def get_signin_email(email: str, session: AsyncSession = Depends(get_session)):
+    user = await auth_service.get_user_by_email(email=email, session=session)
+    if not user:
+        raise UserNotFound()
+    
+    return True
         
 
-@auth_router.get('/sign_in/{email}/{password}')
-async def login(response: Response, email: str, password: str, request: Request, session: AsyncSession = Depends(get_session)):
+@auth_router.get('/sign_in/{email}/{password}/{remember_me}')
+async def login(bg_tasks: BackgroundTasks, response: Response, email: str, password: str, request: Request, session: AsyncSession = Depends(get_session), remember_me: bool = False):
     user = await auth_service.get_user_by_email(email, session)
     
     if not user:
@@ -269,11 +305,12 @@ async def login(response: Response, email: str, password: str, request: Request,
             access_data['admin'] = 'admin'
         
         access_token = create_access_token(user_data=access_data)
-            
+        device = auth_service.get_device_info(request)
         refresh_token, jti, payload = create_refresh_token(
             user_data = {
                 'email':user.email,
-                'user_uid':str(user.uid)
+                'user_uid':str(user.uid),
+                'device':device,
             },
             refresh = True,
             expiry = timedelta(days=REFRESH_TOKEN_EXPIRY)
@@ -282,7 +319,48 @@ async def login(response: Response, email: str, password: str, request: Request,
         device = auth_service.get_device_info(request)
         await store_refresh_token(access_data['user_uid'], payload, device)
         
+        if user.verified == False:
+            otp = await generate_otp()
+            html_body = verify_email_html(request=request, otp=otp, name=user.firstname)
+                
+            email = user.email
+            subject= f"Your verification code: {otp}"
+            body = html_body
+
             
+            await save_password_reset_otp(user_email=email, otp=otp, expiry_seconds=300)
+                
+            message = create_message(
+                recipients=[email],
+                subject=subject,
+                body=body
+            )
+            bg_tasks.add_task(retry_email, message=message)
+            
+            resp = JSONResponse(
+                content={
+                    "code":str(otp),
+                    "success": True,
+                    "message": "Check your email to verify."
+                },
+                status_code=status.HTTP_201_CREATED
+            )
+
+            resp.set_cookie(
+                key=f"refresh_token_{user.uid}",
+                value=refresh_token,
+                httponly=True,
+                secure=False,
+                samesite="lax",
+                path="/",
+                max_age=7 * 24 * 60 * 60,
+                domain="localhost"
+            )
+
+            return resp
+    current_user = await get_full_user(user_id=user.uid, session=session)
+    if current_user:
+
         resp = JSONResponse(
             content={
                 "message":"login successful",
@@ -290,41 +368,47 @@ async def login(response: Response, email: str, password: str, request: Request,
                 "refresh_token":refresh_token,
                 "user":{
                     "user_id":str(user.uid),
-                    'user_email':user.email
+                    'user_email':user.email,
+                    "account_status":user.status,
+                    "user_details":current_user.model_dump_json()
                 },
             },
             status_code=status.HTTP_200_OK
         )
 
+        max_age = 60 * 60 * 24 * 30 if remember_me else 60 * 60 * 24
         resp.set_cookie(
-            key="refresh_token",
+            key=f"refresh_token_{user.uid}",
             value=refresh_token,
             httponly=True,
             secure=False,
             samesite="lax",
             path="/",
-            max_age=7 * 24 * 60 * 60
+            domain="localhost",
+            max_age=max_age
         )
 
         return resp
-        
-        
+    
+    
     raise InvalidCredentials()
 
 
 @auth_router.post('/logout')
-async def logout_current_user(user: dict = Depends(RefreshTokenBearer())):
-    response = JSONResponse(
+async def logout_current_user(response: Response, token: str = Depends(LogoutTokenBearer())):
+    
+    response.delete_cookie(key="refresh_token", httponly=True, domain="localhost", samesite="lax", secure=False, path="/")
+    await add_jti_to_blocklist(token)
+    return JSONResponse(
         content={
             'message': 'Logged out successfully'
         },
-        status_code=status.HTTP_204_NO_CONTENT
+        status_code=status.HTTP_200_OK
     )
-    response.delete_cookie("refresh_token")
     
     
 @auth_router.post('/reset_password/{email}')
-async def password_reset(email: str, bg_tasks:BackgroundTasks, session: AsyncSession = Depends(get_session), account_status: str = Depends(AccountStatus())):
+async def password_reset(email: str, bg_tasks:BackgroundTasks, session: AsyncSession = Depends(get_session)):
     
     user = await auth_service.get_user_by_email(email, session)
     
@@ -401,7 +485,7 @@ async def enter_new_password(reset_data: PasswordResetModel, session: AsyncSessi
     
     
 @auth_router.delete('/delete_account')
-async def delete_your_account(user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_session), account_status: str = Depends(AccountStatus())):
+async def delete_your_account(user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
     
     user_uid = user.uid
     email = user.email

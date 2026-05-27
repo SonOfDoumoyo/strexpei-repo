@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import axios from "axios";
-import { getUser } from "../context/userContext";
-import type { User } from "../schemas/authTypes";
 import { useUser } from "../context/userContext";
 
 export function getUserFunc () {
 
     const {currentUser, setCurrentUser} = useUser();
     const [error, setError] = useState('');
-    const user_id = getUser()?.user_id;
     
 
     useEffect(() => {
@@ -28,7 +25,6 @@ export function getUserFunc () {
                 }
             }
         }
-
         fetchUser();
 
         return () => {

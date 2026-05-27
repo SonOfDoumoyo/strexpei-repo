@@ -12,6 +12,7 @@ class AllCompanyModel(BaseModel):
     manager_id: uuid.UUID 
     company_name: str
     position: str
+    address: str
     updated_at: datetime 
     created_at: datetime
     staffs: List[StaffAbstractModel]

@@ -12,7 +12,7 @@ class InvalidToken(StrexpeiException):
     pass
 
 class ExpiredToken(StrexpeiException):
-    """USer has provided an expired token"""
+    """User has provided an expired token"""
 
 
 class RevokedToken(StrexpeiException):

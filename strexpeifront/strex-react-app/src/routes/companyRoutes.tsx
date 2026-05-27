@@ -6,8 +6,9 @@ import '../assets/css/main.css';
 import '../assets/css/form.css';
 import api from "../api";
 import { setAccessToken } from "../hooks/useAuths";
-import { setUser, getUser } from "../context/userContext";
+
 import type { Company, ResponseCompanyModel } from "../schemas/CompanyTypes";
+import { getCurrentUid } from "../hooks/currentUid";
 
 
 export function getCompany(){
@@ -15,7 +16,7 @@ export function getCompany(){
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [companies, setCompanies] = useState<Company[]>([]);
-    const user_id = getUser()?.user_id;
+    const user_id = getCurrentUid()
 
     useEffect(() => {
         if (!user_id) return;
@@ -24,7 +25,7 @@ export function getCompany(){
         async function fetchCompany() {
             try {
                 const response = await api.get<ResponseCompanyModel>(
-                    `/company/get_user_company/${getUser()?.user_id}`
+                    `/company/get_user_company/${getCurrentUid()}`
                 );
                 if (!cancelled) setCompanies(response.data.company);
 

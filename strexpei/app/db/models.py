@@ -57,6 +57,7 @@ class Company(SQLModel, table=True):
     manager_id: uuid.UUID = Field(sa_column=Column(UUID(as_uuid=True), ForeignKey("users.uid", ondelete="CASCADE"), nullable=False))
     company_name: str = Field(sa_column=Column(String, nullable=False))
     address: str = Field(sa_column=Column(String, nullable=False))
+    totalPayout: str = Field(sa_column=Column(String), default="0")
     position: str = Field(sa_column=Column(String, nullable=False), default='manager')
     updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()))
     is_deleted: bool = Field(default=False)
@@ -129,6 +130,8 @@ class RequestJoin(SQLModel, table=True):
     revoked_at: datetime | None = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=None))
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False, server_default=func.now()))
     created_by: uuid.UUID = Field(default=None, foreign_key='users.uid')
+    firstname: str = Field(sa_column=Column(String, nullable=True), default="null")
+    lastname: str = Field(sa_column=Column(String, nullable=True), default="null")
     creator: Optional[User] = Relationship(back_populates='request')
     company: Optional[Company] = Relationship(back_populates='request')
 

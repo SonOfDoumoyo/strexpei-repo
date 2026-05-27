@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from datetime import datetime
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Dict
 from ..auth.auth_schema import UserModel
 from ..company.company_schema import CompanyModel
 
@@ -31,6 +31,8 @@ class RequestStaffModel(BaseModel):
     company_id: uuid.UUID 
     company_name: str 
     position: str 
+    firstname: str | None = None
+    lastname: str | None = None
     company_email: str
     status: str
     token: str 
@@ -52,6 +54,8 @@ class AbstractRequestStaffModel(BaseModel):
     company_email: str
     status: str
     token: str 
+    firstname: str | None = None
+    lastname: str | None = None
     expires_at: datetime
     revoked: bool
     revoked_at: datetime | None = None
@@ -118,3 +122,15 @@ class StaffModel(BaseModel):
 
 class GetAllStaffModel(BaseModel):
     staffs: List[StaffModel]
+
+
+class UpdateStaffModel(BaseModel):
+    salary: Optional[str] = None
+    position: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class BulkStaffUpdate(BaseModel):
+    staffs: Dict[str, UpdateStaffModel]
+
+    model_config = ConfigDict(from_attributes=True)

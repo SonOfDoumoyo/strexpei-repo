@@ -1,136 +1,84 @@
 .not-container {
-    margin-top: 1.8em;
+    /* background-color: aliceblue; */
     position: relative;
-    height: 60vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 1em;
-}
-
-.not-container .request-nots {
+    height: 100vh;
     width: 100%;
-    padding: 15px 20px;
-    background-color: #5f00ff;
-    display: flex;
-    flex-direction: column;
-    border-radius: 18px;
-    border: 1px solid;
-    border-color: rgba(255, 255, 255, 0.09);
-    gap: 1em;
-    position: absolute;
-    top: 0;
-    cursor: pointer;
-}
-
-.not-container .request-nots {
-    width: 100%;
-    padding: 15px 20px;
-    background-color: #5d00ff20;
-    display: flex;
-    flex-direction: column;
-    border-radius: 18px;
-    border: 1px solid;
-    border-color: rgba(255, 255, 255, 0.09);
-    gap: 1em;
-    position: absolute;
-    top: 0;
-    cursor: pointer;
-}
-
-.request-nots h3, .uncld-box h3 {
-    display: flex;
-    left: 0;
-    gap: 3em;
-    font-size: 2em;
-}
-
-.request-nots .mess, .uncld-box .mess {
-    display: flex;
-    left: 0;
-    font-size: 1.5em;
-}
-
-.a-d {
-    background-color: #5d00ff4b;
-    position: absolute;
-    right: 0;
-    top: 30%;
-    display: none;
-    gap: 1.2em;
-    margin-right: 15px;
-    justify-content: center;
-    align-items: center;
-}
-
-.accpr {
-    display: flex;
-    align-items: center;
-    position: absolute;
-    justify-content: center;
-    width: 100%;
-    bottom: 0;
-    margin-bottom: 16px;
-    gap: 70%;
-}
-
-.a-ds button {
-    width: 8vw;
-    height: 2em;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.2em;
-}
-
-.accpr .accept-btn {
-    position: relative;
-    float: left;
-    display: flex;
-    left: 0;
-}
-
-.accpr .decline-btn {
-    position: relative;
-    float: right;
-    display: flex;
-    right: 0;
-}
-
-.uncld-box {
-    width: 100%;
-    padding: 15px 20px;
-    display: flex;
-    flex-direction: column;
-    border-radius: 18px;
-    border: 1px solid;
-    border-color: rgba(255, 255, 255, 0.09);
-    gap: 1em;
-    position: absolute;
-    top: 0;
-    cursor: pointer;
-}
-
-.a-ds {
-    position: absolute;
-    background-color: #5f00ff;
-    width: 100%;
-    height: 98vh;
-    display: block;
-    transform: translateY(-8%);
-    top: 0;
-    right: 0;
-    z-index: 2;
-    color: white;
+    overflow-y: auto;
+    z-index: -1;
     border-radius: 16px;
-    margin-left: 15px;
 }
 
-.a-ds h3 {
-    font-size: 2em;
+.not-container .clicked-not, .not-container .unclicked-not {
+    background-color: #0000d8;
+    padding: 4em;
+    cursor: pointer;
 }
 
-.a-ds p {
-    font-size: 1.5em;
+.not-container .clicked-not {
+    opacity: 0.3;
+}
+
+.not-container .not-opened {
+    display: none;
+}
+
+.not-container .opened {
+    display: flex;
+    position: absolute;
+    background-color: #151515;
+    padding: 4em;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    flex-direction: column;
+    z-index: 1;
+}
+
+.not-container .opened h3 {
+    font-size: 2.9em;
+    font-weight: 600;
+    margin-bottom: 0.52em;
+    display: flex;
+    /* flex-direction: column; */
+    justify-content: space-between;
+    /* background-color: #0000d8; */
+}
+
+.not-container .opened i {
+    cursor: pointer;
+    color: #0000d8;
+}
+
+.not-container .opened .message-box {
+    height: auto;
+    width: 100%;
+    background-color: #1f1f1f;
+    border-radius: 16px;
+    height: 90%;
+    padding: 2em;
+    font-size: 2.2em;
+    font-weight: 900;
+    margin-bottom: 0.52em;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.not-container .opened .accdec {
+    display: flex;
+    justify-content: space-between;
+    z-index: 1;
+}
+
+.not-container .opened .accdec button {
+    background-color: #0000d8;
+    padding: 0.7em;
+    padding-left: 1.5em;
+    padding-right: 1.5em;
+    border-radius: 6px;
+    font-size: 0.62em;
+    font-weight: 600;
+    width: 15%;
+    z-index: 1;
+    cursor: pointer;
 }

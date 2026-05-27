@@ -9,7 +9,7 @@ from ...config import Config
 import httpx
 from ..bank.main import get_access_token
 import uuid
-from .staff_schema import JoinRequestStaffModel, GetAllStaffModel, UpdateAccountDetModel
+from .staff_schema import JoinRequestStaffModel, GetAllStaffModel, UpdateAccountDetModel, BulkStaffUpdate, UpdateStaffModel
 from ..auth.service import AuthService
 from ..company.service import CompanyService
 from ...errors import (
@@ -61,7 +61,7 @@ async def get_all_staffs(session: AsyncSession = Depends(get_session)):
     return {'staffs':staffs}
 
 @staff_router.get('/get_staff_comps')
-async def get_users_companies(user: dict = Depends(get_current_user)):
+async def get_users_companies(user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
     user_id = user.uid
 
     all_comps = await staff_service.get_all_user_companies(uid=user_id, session=session)
@@ -109,6 +109,9 @@ async def accept_join_request(token: str, session: AsyncSession = Depends(get_se
     add_staff = await staff_service.add_staff_to_company(user_details=valid_user, cid=valid_company.cid, role=token_details['role'], session=session)
     update_request_status = await staff_service.update_request_detail(token=token, update_details={'status':'accepted'}, session=session)
 
+    if not update_request_status:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Not Updated')
+
     return JSONResponse(
         content={
             'message':f'successfully added {valid_user.firstname} to {valid_company.company_name} Company'
@@ -138,18 +141,17 @@ async def decline_join_request(token: str, session: AsyncSession = Depends(get_s
 async def request_to_join_organization(bg_tasks: BackgroundTasks, request_info: JoinRequestStaffModel, token_details: dict = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session)):
      
     token_user_id = token_details['user']['user_uid']
+    company_id = request_info.company_id
 
     valid_user = await auth_service.get_user_abstract(uid=token_user_id, session=session)
 
     if not valid_user:
         raise UserNotFound()
     
-    existing_staff = await staff_service.get_staff_by_uid(user_id=token_user_id, session=session)
+    existing_staff = await staff_service.get_staff_by_uid_and_cid(user_id=token_user_id, cid=company_id, session=session)
     if existing_staff:
         raise ExistingStaffConflict()
-     
-    first_name = valid_user.firstname
-    company_id = request_info.company_id
+    
     valid_company = await company_service.get_company_by_cid(cid=company_id, session=session)
 
     if not valid_company:
@@ -197,6 +199,29 @@ async def request_to_join_organization(bg_tasks: BackgroundTasks, request_info: 
         },
         status_code=status.HTTP_200_OK
     )
+
+
+@staff_router.patch('/update_staff/{staff_id}')
+async def update_staff_data(staff_id: uuid.UUID, update_data: UpdateStaffModel, token: dict = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session), ):
+    user_uid = token['user']['user_uid']
+    valid_user = await auth_service.get_user_abstract(uid=user_uid, session=session)
+    if not valid_user:
+        raise UserNotFound()
+    valid_staff = await staff_service.get_staff_by_sid(sid=staff_id, session=session)
+    if not valid_staff:
+        raise StaffNotFound()
+    
+    staff_update_data = update_data.model_dump(exclude_none=True, exclude_unset=True)
+    update_staffs = await staff_service.update_company_staff(staff=valid_staff, staff_update_dict=staff_update_data, session=session)
+    if not update_staffs:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'message':'Something went wrong'})
+    return JSONResponse(
+        content={
+            'message':'updated successfully'
+        },
+        status_code=status.HTTP_200_OK
+    )
+
 
 
 @staff_router.post('/update_bank_details/{company_id}')

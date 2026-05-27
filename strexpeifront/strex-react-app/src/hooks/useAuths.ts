@@ -1,14 +1,14 @@
 // authStore.ts
-let accessToken: string | null = null;
 
-export function setAccessToken(token: string) {
-    accessToken = token;
+export function setAccessToken(uid: string,token: string) {
+
+    sessionStorage.setItem(uid, token);
 }
 
-export function getAccessToken(): string | null {
-    return accessToken;
+export function getAccessToken(uid: string){
+    return sessionStorage.getItem(uid);
 }
 
-export function clearAccessToken(): void {
-    accessToken = null;
+export function clearAccessToken(uid: string): void {
+    sessionStorage.removeItem(uid);
 }

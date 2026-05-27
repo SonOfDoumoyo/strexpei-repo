@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, BackgroundTasks, status, Form, Request, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from ..auth.service import AuthService, verify_email_html, account_verified_html, generate_otp
-from .company_schema import CompanyModel, AddCompanyModel, ResponseCompanyModel, CreateInviteModel
+from .company_schema import CompanyModel, AddCompanyModel, ResponseCompanyModel, CreateInviteModel, UpdateCompanyModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..db.session_ini import get_session
 from ..auth.utils import create_url_safe_token, decode_url_safe_token, verify_password, create_access_token, generate_password_hash,create_company_token, create_refresh_token, refresh_access_token, create_company_refresh_token, decode_token
@@ -373,6 +373,16 @@ async def get_current_users_companies(uid: uuid.UUID, session: AsyncSession = De
         )
     
     return {"company":user_companies}
+
+
+@company_router.patch('/update_company_data/{cid}')
+async def update_company_data_(cid: uuid.UUID, update_data: UpdateCompanyModel, manager_data: dict = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session)):
+    uid = manager_data["user"]["user_uid"]
+    manager = await company_service.get_company_by_cid(cid=cid, session=session)
+    if not manager:
+        raise CompanyNotFound()
+    
+    update_comp = await company_service.update_company(cid=cid, user_data=update_data, session=session)
 
 
 @company_router.post('/create_company')#, #response_model=ResponseCompanyModel)

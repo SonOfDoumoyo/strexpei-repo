@@ -63,6 +63,13 @@ class CreateInviteModel(BaseModel):
     
     email: EmailStr 
     role: str
+
+class UpdateCompanyModel(BaseModel):
+    position: Optional[str] = None
+    address: Optional[str] = None
+    company_name: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
     
     
 class InviteModel(BaseModel):

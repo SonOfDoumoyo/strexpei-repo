@@ -9,3 +9,7 @@ export interface Notifications {
         // sender: User;
         // receiver: User;
     }
+
+export interface ListNotifications {
+    notifications: Notifications[];
+}

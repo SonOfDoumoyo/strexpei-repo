@@ -1,137 +1,238 @@
-.vform-box {
-    position: relative;
-    display: flex;
-    justify-content: center;
+.verify-screen {
+    justify-items: center;
     align-items: center;
-    flex-direction: column;
-}
-
-.otp-message {
+    justify-self: center;
+    z-index: 1;
     display: flex;
-    position: absolute;
-    top: 30%;
-    gap: 0.5em;
-}
-
-.otp-message p {
-    font-size: 1.5em;
-}
-
-.verify-box {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-}
-
-.verify-box .otp-boxes, .verify-box .otp-correct, .verify-box .all-red {
-    position: relative;
-    display: flex;
-    gap: 2em;
-    flex-direction: row;
-    margin-bottom: 1em;
-    margin-left: 0;
-    margin-right: 0;
-}
-
-.verify-box .otp-boxes input {
-    height: 6vh;
-    width: 4vw;
-    outline: none;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    text-align: center;
-    font-size: 2em;
-    font-weight: 600;
-    border-radius: 8px;
-    background: #2f2f2f27;
-    border-style: solid;
-    color: white;
-    padding: 0;
-}
-
-.verify-box .otp-boxes input:valid {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-.resend-otp {
-    position: relative;
-}
-
-.otp-re {
-    position: relative;
-    margin-left: 0.2vw;
-}
-
-.verify-box .btn-div {
-    display: flex;
-    justify-content: center;
-    width: 30vw;
-}
-
-.verify-box .verify-btn {
-    position: relative;
-    font-size: 1.5em;
     width: 100%;
-    margin-top: 6em;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.verify-box .otp-correct input {
-    
-    border: 1px solid green;
-    height: 6vh;
-    width: 4vw;
-    outline: none;
-    position: relative;
-    display: flex;
+    height: 100vh;
     justify-content: center;
-    text-align: center;
-    font-size: 2em;
-    font-weight: 600;
-    border-radius: 8px;
-    background: #2f2f2f27;
-    color: white;
-    padding: 0;
-}
-
-.verify-box .all-red input {
-    border: 1px solid red;
-    height: 6vh;
-    width: 4vw;
-    outline: none;
+    overflow: hidden;
     position: relative;
-    display: flex;
-    justify-content: center;
-    text-align: center;
-    font-size: 2em;
-    font-weight: 600;
-    border-radius: 8px;
-    background: #2f2f2f27;
-    color: white;
-    padding: 0;
+    outline: none;
 }
 
 .error-box {
-    font-size: 1.5em;
-    background: #2b1f1fb1;
-    border-radius: 8px;
-    display: flex;
-    right: 0;
-    margin: 1em;
-    padding: 0.8em;
+    background-color: rgb(84, 83, 83);
+    position: absolute;
+    padding: 0.5em;
+    font-size: 1.35em;
+    font-weight: 600;
+    color: #730606;
     top: 0;
-    height: auto;
-    width: auto;
-    border-color: red;
+    right: 0;
+    border: 1px solid #ff0101;
 }
 
-.error-box {
-    color: red;
+.verify-screen .rings {
+    position: absolute;
+    /* background-color: aliceblue; */
+    inset: 0;
+    display: flex;
+    width: 50%;
+    height: 50%;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    justify-self: center;
+    pointer-events: none;
+}
+
+.verify-screen .rings .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    display: flex;
+    justify-self: center;
+    align-self: center;
+}
+
+.verify-screen .rings .ring-1 {
+    width: 970px;
+    height: 910px;
+    background-color: #85848409;
+    border-color: #0042a6;
+    box-shadow: 0 0 8px #0042a6, 0 0 22px #0042a6aa, 0 0 45px #0042a655;
+    animation: orbit1 5s linear infinite, morph1 6s ease-in-out infinite;
+}
+
+.verify-screen .rings .ring-2 {
+    width: 950px;
+    height: 890px;
+    background-color: #85848409;
+    border-color: #14adff;
+    box-shadow: 0 0 8px #14adff, 0 0 22px #14adff, 0 0 45px #14adff55;
+    animation: orbit2 5s linear infinite, morph2 7s ease-in-out infinite;
+}
+
+.verify-screen .rings .ring-3 {
+    width: 960px;
+    height: 900px;
+    background-color: #85848409;
+    border-color: #0000d8;
+    box-shadow: 0 0 8px #0000d8, 0 0 22px #0000d8aa, 0 0 45px #0000d855;
+    animation: orbit3 5s linear infinite,  morph3 8s ease-in-out infinite;
+}
+
+@keyframes orbit1 {
+    from { transform: rotate(0deg);}
+    to { transform: rotate(360deg); }
+}
+
+@keyframes orbit2 {
+    from { transform: rotate(120deg);}
+    to { transform: rotate(480deg); }
+}
+
+@keyframes orbit3 {
+    from { transform: rotate(240deg);}
+    to { transform: rotate(-120deg); }
+}
+
+@keyframes morph1 {
+    0%, 100% { border-radius: 50%; width: 777px; height: 790px; }
+    25% { border-radius: 60%40%55%45%/45%55%45%55%; width: 795px; height: 788px; }
+    50% { border-radius: 45%55%40%60%/60%40%60%40%; width: 758px; height: 735px; }
+    75% { border-radius: 55%45%60%40%/40%60%40%60%; width: 782px; height: 698px; }
+}
+
+@keyframes morph2 {
+    0%, 100% { border-radius: 50%; width: 750px; height: 790px; }
+    25% { border-radius: 40%60%50%50%/55%45%55%45%; width: 738px; height: 714px; }
+    50% { border-radius: 45%55%40%60%/60%40%60%40%; width: 758px; height: 735px; }
+    75% { border-radius: 60%40%45%55%/45%55%45%55%; width: 768px; height: 676px; }
+}
+
+@keyframes morph3 {
+    0%, 100% { border-radius: 50%; width: 760px; height: 700px; }
+    25% { border-radius: 55%45%60%40%/60%40%55%45%; width: 778px; height: 683px; }
+    50% { border-radius: 45%55%45%55%45%55%45%55%; width: 742px; height: 722px; }
+    75% { border-radius: 60%40%50%50%/50%50%40%60%; width: 752px; height: 694px; }
+}
+
+.verify-screen .card {
+    width: 33%;
+    height: 70%;
+    padding: 2em;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.verify-screen .card .h1-head {
+    margin-bottom: 3em;
+}
+
+.verify-screen .card .h1-head h4{
+    font-size: 2.5em;
+    font-weight: 900;
+    display: flex;
+    flex-direction: row;
+}
+
+.verify-screen .card .h1-head .strexpei-span .Pei-span {
+    color: #0000d8;
+    font-weight: 900;
+}
+
+.verify-screen .card .h1-head .strexpei-span {
+    margin-left: 0.3em;
+    margin-right: 0.3em;
+}
+
+.verify-screen .card .otp-message {
+    font-size: 1.3em;
+    /* background-color: #0000d8; */
+    width: 100%;
+    margin-bottom: 1em;
+}
+
+.verify-screen .card .otp-message p span {
+    color: #14adff;
+    /* margin-left: 0.2em; */
+}
+
+.verify-screen .card .verify-box {
+    position: relative;
+    width: 100%;
+}
+
+.verify-screen .card .input-group {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    gap: 1em;
+    margin-bottom: 27em;
+}
+
+.verify-screen .card .input-group input {
+    padding: 1em;
+    background: none;
+    border: 1px solid #14adff;
+    outline: none;
+    text-align: center;
+    width: 80px;
+    font-size: 2.2em;
+    font-weight: 900;
+    border-radius: 8px;
+}
+
+.verify-screen .card .btn-div {
+    width: 100%;
+    align-content: center;
+    justify-content: center;
+    display: flex;
+}
+
+.verify-screen .card .verify-btn {
+    background-color: #0000d8;
+    padding: 1em;
+    padding-left: 1.5em;
+    padding-right: 1.5em;
+    border-radius: 6px;
+    font-size: 1.2em;
+    font-weight: 700;
+    width: 100%;
+    justify-self: center;
+    display: flex;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 3px 15px 39px #00000065;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.verify-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255, 255, 255, 0.7),
+        transparent
+    );
+    transform: skewX(-25deg);
+    transition: left 1.5s ease;
+}
+
+.verify-btn:hover::before {
+    left: 150%;
+}
+
+.verify-screen .resend-otp {
+    margin-top: 3.5em;
+    font-size: 1.3em;
+}
+
+.verify-screen .resend-otp .otp-re {
+    color: #14adff;
+    cursor: pointer;
+    margin-left: 0.3em;
 }

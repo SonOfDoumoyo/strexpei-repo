@@ -8,7 +8,7 @@ JTI_EXPIRY = 3600
 MAX_ATTEMPTS = 5
 
 #gets the url from confog
-redis_client = aioredis.from_url(Config.REDIS_URL)
+redis_client = aioredis.from_url(Config.REDIS_URL, decode_responses=True)
 
 async def add_jti_to_blocklist(jti: str) -> None:
     #adds token to blocklist
@@ -83,3 +83,9 @@ async def store_refresh_token(user_id:str, value, device:str):
         value,
         ex=7 * 24 * 60 * 60
     )
+
+async def get_refresh_token(user_id:str, device:str):
+    return redis_client.get(f"refresh:user:{user_id}:device:{device}")
+
+async def delete_refresh_token(user_id: str, device: str):
+    await redis_client.delete(f"refresh:user:{user_id}:device:{device}")

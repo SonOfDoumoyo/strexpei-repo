@@ -1,0 +1,261 @@
+.signup-screen {
+    justify-items: center;
+    align-items: center;
+    justify-self: center;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    outline: none;
+}
+
+.signup-screen .rings {
+    position: absolute;
+    width: 50%;
+    height: 90%;
+    inset: 0;
+    display: flex;
+    justify-self: center;
+    align-self: center;
+    pointer-events: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.signup-screen .rings .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    display: flex;
+    justify-self: center;
+    align-self: center;
+}
+
+.signup-screen .rings .ring-1 {
+    width: 995px;
+    height: 790px;
+    border-color: #0042a6;
+    background-color: #85848409;
+    box-shadow: 0 0 8px #0042a6, 0 0 22px #0042a6aa, 0 0 45px #0042a655;
+    animation: orbit1 5s linear infinite,  morph1 6s ease-in-out infinite;
+}
+
+.signup-screen .rings .ring-2 {
+    width: 950px;
+    height: 740px;
+    border-color: #14adff;
+    background-color: #85848409;
+    box-shadow: 0 0 8px #14adff, 0 0 22px #14adffaa, 0 0 45px #14adff55;
+    animation: orbit2 5s linear infinite,  morph2 7s ease-in-out infinite;
+}
+
+.signup-screen .rings .ring-3 {
+    width: 960px;
+    height: 700px;
+    border-color: #0000d8;
+    background-color: #85848409;
+    box-shadow: 0 0 8px #0000d8, 0 0 22px #0000d8aa, 0 0 45px #0000d855;
+    animation: orbit3 5s linear infinite,  morph3 8s ease-in-out infinite;
+}
+
+@keyframes orbit1 {
+    from { transform: rotate(0deg);}
+    to { transform: rotate(360deg); }
+}
+
+@keyframes orbit2 {
+    from { transform: rotate(120deg);}
+    to { transform: rotate(480deg); }
+}
+
+@keyframes orbit3 {
+    from { transform: rotate(240deg);}
+    to { transform: rotate(-120deg); }
+}
+
+@keyframes morph1 {
+    0%, 100% { border-radius: 50%; width: 777px; height: 790px; }
+    25% { border-radius: 60%40%55%45%/45%55%45%55%; width: 795px; height: 788px; }
+    50% { border-radius: 45%55%40%60%/60%40%60%40%; width: 758px; height: 735px; }
+    75% { border-radius: 55%45%60%40%/40%60%40%60%; width: 782px; height: 698px; }
+}
+
+@keyframes morph2 {
+    0%, 100% { border-radius: 50%; width: 750px; height: 790px; }
+    25% { border-radius: 40%60%50%50%/55%45%55%45%; width: 738px; height: 714px; }
+    50% { border-radius: 45%55%40%60%/60%40%60%40%; width: 758px; height: 735px; }
+    75% { border-radius: 60%40%45%55%/45%55%45%55%; width: 768px; height: 676px; }
+}
+
+@keyframes morph3 {
+    0%, 100% { border-radius: 50%; width: 760px; height: 700px; }
+    25% { border-radius: 55%45%60%40%/60%40%55%45%; width: 778px; height: 683px; }
+    50% { border-radius: 45%55%45%55%45%55%45%55%; width: 742px; height: 722px; }
+    75% { border-radius: 60%40%50%50%/50%50%40%60%; width: 752px; height: 694px; }
+}
+
+.signup-screen .card {
+    /* background-color: #85848409; */
+    width: 30%;
+    height: 60%;
+    padding: 2em 2em;
+    z-index: 2;
+}
+
+.signup-screen .card .create-h1 {
+    font-size: 2.2em;
+    font-weight: 600;
+    margin-bottom: 1.5em;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    top: 0;
+    position: sticky;
+}
+
+.signup-screen .card h1 h3 {
+    margin-left: 0.3em;
+    margin-right: 0.3em;
+}
+
+.signup-screen .card .create-h1 h3 span{
+    color: #0000d8;
+}
+
+.signup-screen form {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 55%;
+    outline: none;
+}
+
+.signup-screen form::-webkit-scrollbar {
+    width: 0;
+}
+
+.signup-screen form:hover::-webkit-scrollbar {
+    width: 8px;
+}
+
+.signup-screen form:hover::-webkit-scrollbar-thumb {
+    width: 7px;
+    border-radius: 10px;
+    background: #0000d83d;
+}
+
+
+/* 
+.signup-screen form::-webkit-scrollbar-track {
+    background: #fff;
+}
+} */
+
+.signup-screen .card .input-group input{
+    border: none;
+    background: none;
+    border-bottom: 2px solid #0000d8;
+    width: 100%;
+    padding: 0.5em;
+    color: #fff;
+    outline: none;
+    font-size: 1.9em;
+}
+
+.signup-screen .card .input-group i {
+    font-size: 2em;
+    color: #0000d8;
+}
+
+.signup-screen .card .instruction {
+    font-size: 1.3em;
+    color: #858484c3;
+    text-align: center;
+}
+
+.signup-screen .card .signup-btn {
+    background-color: #0000d8;
+    padding: 1em;
+    padding-left: 1.5em;
+    padding-right: 1.5em;
+    border-radius: 6px;
+    font-size: 1.2em;
+    font-weight: 700;
+    width: 100%;
+    justify-self: center;
+    display: flex;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 3px 15px 39px #00000065;
+    position: sticky; 
+    bottom: 0;
+    overflow: hidden;
+}
+
+.signup-screen .card .signup-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255, 255, 255, 0.7),
+        transparent
+    );
+    transform: skewX(-25deg);
+    transition: left 1.5s ease;
+}
+
+.signup-screen .card .signup-btn:hover::before {
+    left: 150%;
+}
+
+.signup-screen .card .passwd-box .passwd-div {
+    display: flex;
+    flex-direction: row;
+    /* justify-content: center; */
+    align-items: center;
+    position: relative;
+}
+
+.signup-screen .card .passwd-div i {
+    display: flex;
+    /* left: 10%; */
+    position: absolute;
+    right: 2%;
+    font-size: 2em;
+}
+
+.signup-screen .card .passwd-box input {
+    display: flex;
+    justify-content: start;
+    align-items: start;
+    right: 0;
+    width: 100vw;
+}
+
+.signup-screen .card .passwd-box .passwd-div i {
+    color: #fff;
+}
+
+.signup-screen .card .sign-in {
+    display: flex;
+    justify-self: center;
+    align-self: center;
+    margin-top: 5em;
+    color: #858484c3;
+    font-size: 1.3em;
+}
+
+.signup-screen .card .sign-in span {
+    margin-left: 0.3em;
+    color: #14adff;
+    cursor: pointer;
+}

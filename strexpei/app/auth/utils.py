@@ -174,6 +174,7 @@ def decode_token(token: str) -> dict:
         
     except jwt.InvalidTokenError:
         raise InvalidToken()
+    
 
 
 async def refresh_access_token(user: UserModel, token_data: dict, device=str):
@@ -199,7 +200,7 @@ async def refresh_access_token(user: UserModel, token_data: dict, device=str):
         
         access_data ={
                 "email":user.email,
-                "user_uid":payload.get('user_uid'),
+                "user_uid":payload.get('user_data', {}).get('user_uid'),
                 'role':user.role,
                 "created_at":user.created_at.isoformat(),
         }

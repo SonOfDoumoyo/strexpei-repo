@@ -76,6 +76,7 @@ async def set_staff_salary(salary_update: SalaryUpdateModel, company_id: uuid.UU
     salary_update_dict = salary_update.model_dump()
     update_staff =  await staff_service.update_company_staff(staff=valid_company_staff, staff_update_dict=salary_update_dict, session=session)
 
+
     return update_staff
 
 

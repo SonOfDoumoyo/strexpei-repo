@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import HTTPException
 from ..auth.dependencies import AccessTokenBearer, get_current_user
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..db.session_ini import get_session
-from .user_schema import UserEditModel
+from .user_schema import UserEditModel, NotificationModel, ListNotificationModel
 from ..auth.service import AuthService
 from ..db.models import User
 from .service import UserService
@@ -38,3 +39,14 @@ async def update_is_read(notification_id: uuid.UUID, user: User = Depends(get_cu
         },
         status_code=status.HTTP_200_OK
     )
+
+@user_router.get('/notifications', response_model=ListNotificationModel, status_code=status.HTTP_200_OK)
+async def get_notification(user: User = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
+
+    notify = await user_service.get_user_notifications(receiver_id=user.uid, session=session)
+
+    if not notify:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No notification")
+    
+    return {"notifications":[NotificationModel.model_validate(notify)]}
+
