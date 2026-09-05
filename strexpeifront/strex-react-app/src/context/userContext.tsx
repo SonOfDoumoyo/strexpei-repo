@@ -7,20 +7,6 @@ import { useLocation } from "react-router-dom";
 import { getCurrentUid } from "../hooks/currentUid";
 import { clearAccessToken } from "../hooks/useAuths";
 
-// let loginUser: { user_id: string; user_email: string} | null = null;
-
-// export function setUser(user: { user_id: string; user_email: string }) {
-//     loginUser = user;
-// }
-
-// export function getUser() {
-//     return loginUser;
-// }
-
-// export function charUser() {
-//     loginUser = null;
-// }
-
 type UserContextType = {
     currentUser: User | null;
     setCurrentUser: React.Dispatch<React.SetStateAction<User | null>>;
@@ -41,7 +27,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const fetchUser = useCallback(async () => {
         const uid = getCurrentUid();
-        console.log(uid);
         if (!uid) {
             setLoading(false);
             return;

@@ -14,6 +14,7 @@ import { useParams } from "react-router-dom";
 import { useUser } from "../context/userContext";
 import api from "../api";
 import { getCurrentUid, setCurrentUid } from "../hooks/currentUid";
+import { useMemo } from "react";
 
 function Home () {
     
@@ -40,6 +41,9 @@ function Home () {
         const stored = sessionStorage.getItem(`comp_${getCurrentUid()}`)
         return stored ? JSON.parse(stored) : false
     });
+
+    const [ inviteclicked, setInviteClicked ] = useState(false);
+
     const [sidebar, setSideBar ] = useState(true);
     const timeOfDay = useTimeOfDay();
     const dateOfDay = useDateOfDay();
@@ -61,6 +65,9 @@ function Home () {
     useEffect(() => {
         setDraftData(setDD());
     }, [selectedCompany]);
+
+    
+    
 
     const handleSideBarChosen = (sideBar_: string) => {
         setSelectedSideBar(sideBar_);
@@ -279,9 +286,9 @@ function Home () {
     //     }))
     // ]
 
-    const pendingRequest = [...(currentUser?.companies ?? []).flatMap(r => 
-        (r.request)
-    )].length
+    // const pendingRequest = [...(currentUser?.companies ?? []).flatMap(r => 
+    //     (r.request)
+    // )].length
 
     const totalSalary = selectedOrg?.staffs.reduce((acc, staff) => acc + Number(staff.salary), 0) || 0;
 
@@ -302,14 +309,67 @@ function Home () {
     }
 
     const getRequestUser = async (sender_id: string) => {
+        // used when user is clicked
         const response = await api.get(`/worker/get_a_user/${sender_id}`)
     }
+
+    const handleAcceptRequest = async (token: string) => {
+        try {
+            const response = await api.get(`/staffs/accept_request/${token}`)
+            console.log(response);
+            if (response.status === 201){
+                fetchUser();
+            }
+        } catch (err: unknown) 
+        {
+            if (axios.isAxiosError(err)) {
+                console.log(err.response);
+                setError(err.response?.data || "couldn't accept request")
+            } else {
+                setError("Server Not Reachable")
+            }
+        }
+        
+    }
+
+    const handleRejectRequest = async (token: string) => {
+        try {
+            const response = await api.get(`/staffs/reject_request/${token}`)
+            console.log(response);
+            if (response.status === 200){
+                fetchUser();
+            }
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err)) {
+                setError(err.response?.data || "couldn't decline request")
+            } else {
+                setError("Server Not Reachable")
+            }
+        }
+    }
+
+    const pendingRequests = useMemo(() => {
+        return selectedCompany?.requests?.filter(
+            req => req.status === "pending"
+        ) ?? [];
+    }, [handleAcceptRequest, handleRejectRequest]);
+
+
+    const [imageURL, setImageURL] =useState<string>("");
+
+    const fetchQR = async () => {
+        const res = await api.get(`http://localhost:8000/api/v1.0/company/${selectedCompany?.cid}/qr`, {
+            responseType: "blob"
+        })
+        const mageURL = URL.createObjectURL(res.data)
+        setImageURL(mageURL);
+    };
+    
 
     return (
         <div className="flex bg-gray-200 h-full overflow-hidden">
             
             {/* <div className={`${ active === "home" ? "upper-head" : "no-menu"}`}>
-
                 <input type="file" accept="image/*" onChange={handlePicChange}/> */}
                 {/* <div className="dispImg" style={{
                     backgroundImage: `url(${image})`,
@@ -319,7 +379,6 @@ function Home () {
                     {!image && <span>Preview here</span>}
                 </div> */}
                 {/* 
-
                     {(memberships?.length > 1) && (<option value="" className="main-select">Select Company</option>)}
                     {memberships?.map((company) => (
                         <option key={company.cid} value={company.cid} className="option-box">
@@ -328,17 +387,14 @@ function Home () {
                     ))}
                     <option className="opt-plus">
                         <p><i className="bx bx-plus"></i>Add or Join</p>
-                    </option>
-                    
+                    </option>  
                 </select>
                 {(compChosen === true) && (<button className="back-btn manager-btn" type="button" onClick={() => {
                     setSelectedCompany(null);
                     setActive("home");
                     setCompChosen(false);
                 }}>back</button>)} */}
-
-                {/* <p><i className="bx bx-user left-icon"/>{getUser()?.user_email}<i className="bx bxs-user right-i"/></p> */}
-                
+                {/* <p><i className="bx bx-user left-icon"/>{getUser()?.user_email}<i className="bx bxs-user right-i"/></p> */} 
             {/* </div> */}
             {(sidebar === true) && <div className="w-[250px] transition-all border-b-black bg-gray-500 duration-300 border-r overflow-y-auto">
                
@@ -484,28 +540,28 @@ function Home () {
                 {(selectedCompany?.role === "Manager" && selectedSIdeBAr === "overview" && compChosen === true) && (
                 <div className="flex flex-col gap-[4%]">
                     <div className="flex gap-[2%]">
-                        <div className="first-cards flex bg-white w-[30%] flex-col p-12 rounded-xl gap-2  shadow-[0px_0px_20px_rgba(41,43,47,0.2)]">
-                            <h2 className="font-mono text-xl font-semibold text-gray-500">TOTAL DISBURSED</h2>
-                            <h1 className="text-5xl">&#8358;0.00</h1>
-                            <p className="text-base text-green-500">0.00% this quarter</p>
+                        <div className="first-cards flex bg-white w-[30%] flex-col p-12 rounded-xl gap-2  hover:shadow-[0px_0px_20px_rgba(41,43,47,0.2)]">
+                            <h2 className="font-mono text-xl font-bold text-gray-500">TOTAL DISBURSED</h2>
+                            <h1 className="text-5xl ">&#8358;0.00</h1>
+                            <p className="text-base text-green-500 font-bold">0.00% this quarter</p>
                         </div>
 
-                        <div className="first-cards flex bg-white w-[30%] flex-col p-12 rounded-xl gap-2  shadow-[0px_0px_20px_rgba(41,43,47,0.2)]">
-                            <h2 className="font-mono text-xl font-semibold text-gray-500">ACTIVE STAFF</h2>
+                        <div className="first-cards flex bg-white w-[30%] flex-col p-12 rounded-xl gap-2  hover:shadow-[0px_0px_20px_rgba(41,43,47,0.2)]">
+                            <h2 className="font-mono text-xl font-bold text-gray-500">ACTIVE STAFF</h2>
                             <h1 className="text-5xl">{selectedCompany?.members}</h1>
-                            <p className="text-base text-green-500">No staff added this month</p>
+                            <p className="text-base text-green-500 font-bold">No staff added this month</p>
                         </div>
 
-                        <div className="first-cards flex bg-white w-[30%] flex-col p-12 rounded-xl gap-2  shadow-[0px_0px_20px_rgba(41,43,47,0.2)]">
-                            <h2 className="font-mono text-xl font-semibold text-gray-500">LAST PAYROLL</h2>
+                        <div className="first-cards flex bg-white w-[30%] flex-col p-12 rounded-xl gap-2  hover:shadow-[0px_0px_20px_rgba(41,43,47,0.2)]">
+                            <h2 className="font-mono text-xl font-bold text-gray-500">LAST PAYROLL</h2>
                             <h1 className="text-5xl">&#8358;0.00</h1>
-                            <p className="text-base text-gray-500">null</p>
+                            <p className="text-base text-gray-500 font-bold">null</p>
                         </div>
 
-                        <div className="first-cards flex bg-white w-[30%] flex-col p-12 rounded-xl gap-2  shadow-[0px_0px_20px_rgba(41,43,47,0.2)]">
-                            <h2 className="font-mono text-xl font-semibold text-gray-500">PENDING REQUESTS</h2>
+                        <div className="first-cards flex bg-white w-[30%] flex-col p-12 rounded-xl gap-2  hover:shadow-[0px_0px_20px_rgba(41,43,47,0.2)]">
+                            <h2 className="font-mono text-xl font-bold text-gray-500">PENDING REQUESTS</h2>
                             <h1 className="text-5xl">0</h1>
-                            <p className="text-base text-green-500">0.00% this quarter</p>
+                            <p className="text-base text-green-500 font-bold">0.00% this quarter</p>
                         </div>
                     </div>
 
@@ -515,87 +571,87 @@ function Home () {
                                 <div>
                                     <div className="flex flex-row justify-between items-center p-8">
                                         <div className="">
-                                            <h1 className="text-xl font-semibold">Monthly Payroll Disbursement</h1>
-                                            <p className="text-base text-gray-500">Last 6 months . Nigerian Naira (N)</p>
+                                            <h1 className="text-2xl font-black">Monthly Payroll Disbursement</h1>
+                                            <p className="text-xl font-semibold text-gray-500">Last 6 months . Nigerian Naira (N)</p>
                                         </div>
-                                        <p className="text-base font-medium text-gray-500">Export</p>
+                                        <p className="text-base font-medium text-gray-500 flex gap-1"><i className="bx bx-export"></i>Export</p>
                                     </div>
                                     <div className="flex-1 h-px bg-gray-300"></div>
                                 </div>
-                                <div className="flex relative w-full justify-between p-8">
+                                <div className="flex relative w-full justify-between p-8 ">
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Jan</p>
+                                        <p className="text-base font-bold text-gray-500">Jan</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Feb</p>
+                                        <p className="text-base font-bold text-gray-500">Feb</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Mar</p>
+                                        <p className="text-base font-bold text-gray-500">Mar</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Apr</p>
+                                        <p className="text-base font-bold text-gray-500">Apr</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">May</p>
+                                        <p className="text-base font-bold text-gray-500">May</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Jun</p>
+                                        <p className="text-base font-bold text-gray-500">Jun</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Jul</p>
+                                        <p className="text-base font-bold text-gray-500">Jul</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Aug</p>
+                                        <p className="text-base font-bold text-gray-500">Aug</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Sep</p>
+                                        <p className="text-base font-bold text-gray-500">Sep</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Oct</p>
+                                        <p className="text-base font-bold text-gray-500">Oct</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Nov</p>
+                                        <p className="text-base font-bold text-gray-500">Nov</p>
                                     </div>
 
                                     <div className="flex flex-col h-full justify-between">
                                         <div className="h-[250px]"></div>
-                                        <p className="text-base font-medium text-gray-500">Dec</p>
+                                        <p className="text-base font-bold text-gray-500">Dec</p>
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-white shadow-[0px_0px_20px_rgba(41,43,47,0.2)] rounded-xl">
+                            <div className="qrgradp shadow-[0px_0px_20px_rgba(41,43,47,0.2)] rounded-xl">
                                 <div>
                                     <div className="flex flex-row justify-between items-center p-8">
                                         <div className="">
-                                            <h1 className="text-xl font-semibold">Staff - Last Payroll</h1>
-                                            <p className="text-base text-gray-500">null . {activeStaff}</p>
+                                            <h1 className="text-2xl font-bold">Staff - Last Payroll</h1>
+                                            <p className="text-xl font-bold text-gray-500">null . {activeStaff}</p>
                                         </div>
                                         <p className="text-base font-medium text-gray-500">View All</p>
                                     </div>
                                 </div>
                                 <div className="w-full">
-                                    <div className="flex w-full text-xl p-8 font-semibold text-gray-500 bg-gray-200">
+                                    <div className="flex w-full text-xl p-8 font-black text-gray-500 border-b">
                                         <h2 className="w-[25%]">EMPLOYEE</h2>
                                         <h2 className="w-[20%]">ROLE</h2>
                                         <h2 className="w-[20%]">AMOUNT</h2>
@@ -611,14 +667,14 @@ function Home () {
                                                 </span>
                                                 
                                                 <span className="flex flex-col">
-                                                    <p className="text-xl font-semibold">{staff.firstname} {staff.lastname}</p>
-                                                    <p className="text-gray-500">{staff.position}</p>
+                                                    <p className="text-2xl font-bold">{staff.firstname} {staff.lastname}</p>
+                                                    <p className="text-gray-500 font-extrabold">{staff.position}</p>
                                                 </span>
                                                 </div>
                                                 
-                                            <div className="w-[20%] text-gray-500">{staff.position}</div>
-                                            <div className="w-[20%]">&#8358;{staff.salary}</div>
-                                            <div className="w-[20%]">hehe</div>
+                                            <div className="w-[20%] text-gray-500 font-bold">{staff.position}</div>
+                                            <div className="w-[20%] font-bold">&#8358;{staff.salary}</div>
+                                            <div className="w-[20%] font-bold">coming soon</div>
                                         </div>
                                     ))
                                     }
@@ -628,11 +684,11 @@ function Home () {
                         </div>
                         <div className="w-[40%] text-gray-200">
                             <div className="hero-bg p-8 flex flex-col gap-6 rounded-xl">
-                                <h2 className="text-2xl text-blue-500">NEXT PAYROLL</h2>
-                                <h1 className="text-5xl text-white font-semibold">&#8358;{totalSalary}</h1>
-                                <p className="text-xl">Scheduled . April 30, 2026 . 12 staff</p>
-                                <div>progress bar</div>
-                                <div className="flex justify-between">
+                                <h2 className="text-2xl text-blue-500 font-black">NEXT PAYROLL</h2>
+                                <h1 className="text-5xl text-white font-extrabold">&#8358;{totalSalary}</h1>
+                                <p className="text-xl font-bold">Scheduled . April 30, 2026 . 12 staff</p>
+                                <div className="font-bold">progress bar</div>
+                                <div className="flex justify-between font-black">
                                     <p>Cycle Progress</p>
                                     <p>72% complete</p>
                                 </div>
@@ -733,19 +789,55 @@ function Home () {
                 )}
 
                 {(selectedSIdeBAr === "requests") && (
-                    <div>
+                    <div className="relative h-full rounded-xl">
                         <h1 className="text-5xl font-black mb-[40px]">Join Requests</h1>
-                        <div>
-                            {selectedCompany?.requests?.map((req) => (
-                                <div>
-                                    <div>
-                                        <span className="rounded-[50%] p-8 w-4 h-4 bg-blue-400 text-white font-bold text-xl flex justify-center items-center">{req?.firstname?.charAt(0)}{req?.lastname?.charAt(0)}</span>
-                                        <h1>{req?.firstname} {req?.lastname}</h1>
+                        {pendingRequests.length > 0 ? (<div>
+                            {pendingRequests?.map((req) => (
+                                (req.status !== "accepted") && (<div className="w-[100%] flex bg-white h-[200px] p-4 rounded-xl justify-between flex-col shadow-[0px_0px_10px_rgba(41,43,47,0.5)]">
+                                    <div className="flex flex-row items-center justify-between gap-4">
+                                        <span className="rounded-[50%] p-8 w-[50px] h-[50px] bg-blue-400 text-white font-bold text-xl flex justify-center items-center">{req?.firstname?.charAt(0)}{req?.lastname?.charAt(0)}</span>
+                                        <h1 className="w-[100%] text-2xl font-semibold">{req?.firstname} {req?.lastname}</h1>
                                     </div>
-                                    
-                                </div>
+                                    <div className="flex justify-between w-[100%] gap-5">
+                                        <button className="w-[100%] bg-blue-700 rounded-xl p-6 hover:shadow-[0px_0px_10px_rgba(41,43,47,0.5)] font-bold text-xl text-white" onClick={() => handleAcceptRequest(req.token)}>accept</button>
+                                        <button className="w-[100%] bg-gray-200 rounded-xl p-6 hover:shadow-[0px_0px_10px_rgba(41,43,47,0.5)] font-bold text-xl text-gray-600" onClick={() => handleRejectRequest(req.token)}>decline</button>
+                                    </div>
+                                </div>)
                             ))}
+                        </div>) : 
+                        <div className="flex flex-col">
+                            <div>
+                                <p className="text-2xl font-semibold">No pending join requests</p>
+                                <p className="text-xl">New requests will show up here when users request to join</p>
+                            </div>
                         </div>
+                        }
+                        {(inviteclicked === false) && (<div className="flex absolute bottom-0 p-6 items-center flex-col">
+                            <span className="bg-white p-10 rounded-2xl flex flex-col justify-center items-center w-[200px] cursor-pointer" onClick={() => {setInviteClicked(true); fetchQR();}}>
+                                <i className="bx bxs-user-plus text-5xl text-blue-600"/>
+                                <h1 className="text-blue-600 font-bold text-lg">Invite</h1>
+                            </span>
+                        </div>)}
+                        {(inviteclicked === true) && (
+                            <div className="qrgrad rounded-2xl w-[100%] flex absolute z-20 top-0 h-screen flex-col items-center p-4">
+                                <i className="bx bx-x absolute text-5xl font-bold flex left-4 bg-white rounded-[50px] text-gray-500 cursor-pointer" onClick={() => setInviteClicked(false)}></i>
+                                <div className="flex flex-col items-center w-full p-8">
+                                    <h1 className="text-3xl font-bold">Invite New Members</h1>
+                                    <h1>{selectedCompany?.company_name}</h1>
+                                </div>
+                                <div className="w-full flex justify-center items-center p-5">
+                                    <img src={imageURL} className="rounded-2xl m-0 "/>
+                                </div>
+                                <h1 className="text-xl mb-9">Share the invitation QR code or the invitation link wiht your staffs</h1>
+                                <div className="w-[40%] flex flex-col gap-5">
+                                    <button className="w-full bg-blue-600 p-6 rounded-[50px] text-white text-xl font-bold flex gap-2 justify-center"><i className="bx bxs-copy"/>Copy Invite Link</button>
+                                    <div className="flex flex-row gap-5">
+                                        <button className="w-full border border-blue-400 p-6 rounded-[50px] text-blue-600 text-xl font-bold"><i className="bx bxs-file-pdf"/>PDF Flyer</button>
+                                        <button className="w-full border border-blue-400 p-6 rounded-[50px] text-blue-600 text-xl font-bold"><i className="bx bxs-share-alt"/>Share</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

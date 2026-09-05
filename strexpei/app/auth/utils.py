@@ -186,7 +186,7 @@ async def refresh_access_token(user: UserModel, token_data: dict, device=str):
         user_uid = payload['user_data']['user_uid']
         key = f"refresh:user:{user_uid}:device:{device}"
         
-        #check redis fpr refresh token
+        #check redis for refresh token
         redis_data = await redis_client.get(key)
         
         if not redis_data:

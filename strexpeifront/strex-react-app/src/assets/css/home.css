@@ -23,6 +23,14 @@
     background: linear-gradient(90deg, #1d4ed8, #010c28);
 }
 
+.qrgrad {
+    background: linear-gradient(180deg, #b0c1e4, #fff);
+}
+
+.qrgradp {
+    background: linear-gradient(180deg, #3d7eff, #fff);
+}
+
 .activeBar {
     color: #2563eb;
     background-color: #fff;

@@ -85,7 +85,8 @@ async def store_refresh_token(user_id:str, value, device:str):
     )
 
 async def get_refresh_token(user_id:str, device:str):
-    return redis_client.get(f"refresh:user:{user_id}:device:{device}")
+    refresh = await redis_client.get(f"refresh:user:{user_id}:device:{device}")
+    return refresh
 
 async def delete_refresh_token(user_id: str, device: str):
     await redis_client.delete(f"refresh:user:{user_id}:device:{device}")

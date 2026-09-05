@@ -11,11 +11,12 @@ from ..auth.auth_schema import (
 )
 from ..auth.service import AuthService
 from ..company.service import CompanyService
-from fastapi import Request
+from fastapi import Request, status
+from fastapi.exceptions import HTTPException
 from user_agents import parse
 from ...config import Config
 import uuid
-from .staff_schema import StaffModel, GetAllStaffModel, UpdateAccountDetModel, JoinRequestStaffModel
+from .staff_schema import StaffModel, GetAllStaffModel, UpdateAccountDetModel, JoinRequestStaffModel, AbstractRequestStaffModel
 from ..db.models import (
     User,
     Company,
@@ -182,16 +183,16 @@ class StaffService:
         statement = select(RequestJoin).where(RequestJoin.token == token)
         response = await session.execute(statement)
 
-        result = response.scalars().first()
+        return response.scalar_one_or_none()
 
-        return result
 
 
     async def update_request_detail(self, token: str, update_details:dict, session: AsyncSession):
         try:
 
             request = await self.get_user_request(token=token, session=session)
-            manager = await auth_service.get_user_by_email(email=request.company_email, session=session)
+            email = request.company_email
+            manager = await auth_service.get_user_by_email(email=email, session=session)
             receiver = await auth_service.get_user_abstract(uid=request.created_by, session=session)
 
             if not request:
@@ -256,8 +257,8 @@ class StaffService:
                 'lastname':user_details.lastname,
                 'position':role
             }
-
-            existing_staff = await self.get_staff_by_uid(user_id=staff_data['user_id'], session=session)
+            
+            existing_staff = await self.get_staff_by_uid_and_cid(user_id=staff_data['user_id'], cid=cid, session=session)
             if existing_staff:
                 return None
 

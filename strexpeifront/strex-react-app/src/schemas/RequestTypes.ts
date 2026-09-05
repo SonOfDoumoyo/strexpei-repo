@@ -14,6 +14,8 @@ export type Request = {
     revoked_at?: string | null;
     created_at: string;
     created_by: string;
+    firstname: string;
+    lastname: string;
     creator: User;
     company: Company;
 }

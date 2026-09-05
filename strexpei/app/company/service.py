@@ -152,25 +152,34 @@ class CompanyService:
         return result
         
     
-    async def invite_users(self, cid: uuid.UUID, invite_info: CreateInviteModel, session: AsyncSession):
+    async def invite_users(self, cid: uuid.UUID, invite_info: CreateInviteModel | None, session: AsyncSession):
         """creates and adds the invite to database"""
         try:
-            invite_info_dict = invite_info.model_dump()
-            invite_info_dict['expires_at'] = EXPIRY
             company = await self.get_company_by_cid(cid=cid, session=session)
-            staff_email = invite_info.email
+            if isinstance(invite_info, CreateInviteModel):
+                invite_info_dict = invite_info.model_dump()
+                invite_info_dict['expires_at'] = EXPIRY
+                staff_email = invite_info.email
 
-            staff_detail = await auth_service.get_user_by_email(staff_email, session)
+                staff_detail = await auth_service.get_user_by_email(staff_email, session)
             
 
-            url_token = create_url_safe_token(
-                data = {
-                        'email': invite_info.email,
-                        'position': invite_info.role,
-                        'company_id': str(company.cid),
-                        'user_id':str(staff_detail.uid)
-                }
-            )
+                url_token = create_url_safe_token(
+                    data = {
+                            'email': invite_info.email,
+                            'position': invite_info.role,
+                            'company_id': str(company.cid),
+                            'user_id':str(staff_detail.uid)
+                    }
+                )
+            if isinstance(invite_info, None):
+                url_token = create_url_safe_token(
+                    data = {
+                        'company_name':str(company.company_name),
+                        'company_address':company.address
+                    }
+                )
+
 
             
             invite_info_dict['token'] = url_token
@@ -181,6 +190,7 @@ class CompanyService:
             new_invite.company_id = company.cid
             new_invite.created_by = company.manager_id
             new_invite.created_at = datetime.now(timezone.utc)
+            new_invite.used = "1"
             company_name = company.company_name
             
             session.add(new_invite)

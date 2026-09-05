@@ -71,7 +71,7 @@ async def fetch_current_user(user: dict = Depends(get_current_user)):
         
     
 @auth_router.post("/refresh_access")
-async def access_token_refresh(request: Request,response: Response, token_details: dict = Depends(RefreshTokenBearer()), session: AsyncSession = Depends(get_session)):
+async def access_token_refresh(request: Request, response: Response, token_details: dict = Depends(RefreshTokenBearer()), session: AsyncSession = Depends(get_session)):
     
     uid = token_details.get("user_uid")
     device = token_details.get("device")
@@ -109,7 +109,7 @@ async def access_token_refresh(request: Request,response: Response, token_detail
             secure=False,
             samesite="lax",
             path="/",
-            max_age=7 * 24 * 60 * 60,
+            max_age=d,
             domain="localhost"
         )    
         return JSONResponse(
@@ -258,7 +258,7 @@ async def login(bg_tasks: BackgroundTasks, response: Response, email: str, passw
     
     if not user:
         raise UserNotFound()
-    
+     
     fetched_password = user.password
     
     

@@ -22,6 +22,9 @@ from ...errors import(
 )
 import logging
 import asyncio
+import qrcode
+import io
+from fastapi.responses import StreamingResponse
 import uuid
 from ...config import Config
 import time
@@ -56,6 +59,17 @@ async def retry_email(message, n:int = 10):
                 await asyncio.sleep(2 ** attempt)
     logging.error("All retry attempts failed")            
     return "unsuccessful"
+
+
+@company_router.get('/{company_id}/qr')
+async def get_qr(company_id: str, token_data: dict = Depends(AccessTokenBearer())):
+    img = qrcode.make(f"http://localhost:8000/api/v1.0/company/invite_staff_link/{company_id}")
+
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return StreamingResponse(buffer, media_type="image/png")
 
 
 @company_router.get('/get_company_staffs', response_model=DisplayToManagerModel)
@@ -385,7 +399,7 @@ async def update_company_data_(cid: uuid.UUID, update_data: UpdateCompanyModel, 
     update_comp = await company_service.update_company(cid=cid, user_data=update_data, session=session)
 
 
-@company_router.post('/create_company')#, #response_model=ResponseCompanyModel)
+@company_router.post('/create_company')# #response_model=ResponseCompanyModel)
 async def add_your_company(request: Request, add_company: AddCompanyModel = Body(...), user_data: dict = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session)):
     
     
@@ -394,6 +408,21 @@ async def add_your_company(request: Request, add_company: AddCompanyModel = Body
     
     return {
         'company':new_company,
+    }
+
+
+@company_router.get('/invite_staff_link/{company_id}')
+async def get_invite_link(company_id: uuid.UUID, user_data: dict = Depends(AccessTokenBearer()), session: AsyncSession = Depends(get_session)):
+    
+    manager_id = user_data['user']['user_id']
+    manager_email = user_data['user']['email']
+    user = await auth_service.get_user_by_email(manager_email, session)
+    if not user:
+        UserNotFound()
+    create_invite = await company_service.invite_users(cid=company_id, session=session)
+    invite_link = create_invite['url_token']
+    return {
+        f"link":"http://localhost:8000/api/v1.0/company/valid_invite/{invite_link}"
     }
 
 

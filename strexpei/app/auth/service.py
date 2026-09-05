@@ -81,13 +81,13 @@ class AuthService:
         
         
         email = signup_data.email
+        password = signup_data.password
         existing_user = await self.user_exists(email, session)
             
         if existing_user:
             return None
             
         try:
-            password = signup_data.password
             signup_data_dict = signup_data.model_dump()
             signup_data_dict['password'] = generate_password_hash(signup_data_dict['password'])
             

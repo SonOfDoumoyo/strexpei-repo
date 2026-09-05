@@ -107,6 +107,8 @@ async def accept_join_request(token: str, session: AsyncSession = Depends(get_se
         raise CompanyNotFound()
     
     add_staff = await staff_service.add_staff_to_company(user_details=valid_user, cid=valid_company.cid, role=token_details['role'], session=session)
+    if not add_staff:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Staff not added {add_staff}")
     update_request_status = await staff_service.update_request_detail(token=token, update_details={'status':'accepted'}, session=session)
 
     if not update_request_status:
@@ -120,7 +122,7 @@ async def accept_join_request(token: str, session: AsyncSession = Depends(get_se
     )
 
 
-@staff_router.get('reject_request/{token}')
+@staff_router.get('/reject_request/{token}')
 async def decline_join_request(token: str, session: AsyncSession = Depends(get_session)):
     token_details = decode_url_safe_token(token)
 
@@ -133,8 +135,7 @@ async def decline_join_request(token: str, session: AsyncSession = Depends(get_s
         content={
             'message':f'request declined successfully'
         },
-        status_code=status.HTTP_204_NO_CONTENT
-
+        status_code=status.HTTP_200_OK
     )
 
 @staff_router.post('/join_request_company')

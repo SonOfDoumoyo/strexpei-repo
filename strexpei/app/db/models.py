@@ -105,16 +105,17 @@ class Invite(SQLModel, table=True):
     __tablename__='invites'
     invite_id: uuid.UUID = Field(sa_column=Column(pg.UUID(as_uuid=True), nullable=False, primary_key=True), default_factory=uuid.uuid4)
     company_id: uuid.UUID = Field(pg.UUID(as_uuid=True), nullable=False, foreign_key='companies.cid', ondelete="CASCADE")
-    email: str = Field(sa_column=Column(String, nullable=False))
-    role: str = Field(sa_column=Column(String, nullable=False))
+    email: str = Field(sa_column=Column(String, nullable=True), default=None)
+    role: str = Field(sa_column=Column(String, nullable=True), default=None)
     token: str = Field(sa_column=Column(String, nullable=False))
     expires_at: datetime | None = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=None))
-    used: bool = Field(default=False)
+    used: str = Field(sa_column=Column(String, nullable=False), default="0")
     used_at: datetime | None = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=None))
     revoked: bool = Field(default=False)
     revoked_at: datetime | None = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), default=None))
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP(timezone=True), nullable=False, server_default=func.now()))
     created_by: uuid.UUID = Field(default=None, foreign_key='users.uid')
+
 
 class RequestJoin(SQLModel, table=True):
     __tablename__='requests'
@@ -132,6 +133,7 @@ class RequestJoin(SQLModel, table=True):
     created_by: uuid.UUID = Field(default=None, foreign_key='users.uid')
     firstname: str = Field(sa_column=Column(String, nullable=True), default="null")
     lastname: str = Field(sa_column=Column(String, nullable=True), default="null")
+    message: str = Field(sa_column=Column(String, nullable=True), default="null")
     creator: Optional[User] = Relationship(back_populates='request')
     company: Optional[Company] = Relationship(back_populates='request')
 

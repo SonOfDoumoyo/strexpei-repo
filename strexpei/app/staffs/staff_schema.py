@@ -33,6 +33,7 @@ class RequestStaffModel(BaseModel):
     position: str 
     firstname: str | None = None
     lastname: str | None = None
+    message: str | None = None
     company_email: str
     status: str
     token: str 
@@ -56,6 +57,7 @@ class AbstractRequestStaffModel(BaseModel):
     token: str 
     firstname: str | None = None
     lastname: str | None = None
+    message: str | None = None
     expires_at: datetime
     revoked: bool
     revoked_at: datetime | None = None
