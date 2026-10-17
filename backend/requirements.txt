@@ -1,0 +1,20 @@
+# Streixpei API — Python 3.12+
+fastapi==0.128.0
+starlette==0.50.0
+uvicorn[standard]==0.53.0
+sqlalchemy==2.0.46
+psycopg[binary]==3.3.6
+alembic==1.18.3
+redis==7.1.1
+apscheduler==3.11.2
+pydantic==2.13.5
+pydantic-settings==2.12.0
+email-validator==2.3.0
+httpx==0.28.1
+aiosmtplib==5.1.0
+jinja2==3.1.6
+PyJWT==2.14.0
+itsdangerous==2.2.0
+openpyxl==3.1.5
+python-multipart==0.0.32
+tzdata>=2025.2

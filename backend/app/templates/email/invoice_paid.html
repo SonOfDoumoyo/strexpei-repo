@@ -1,0 +1,12 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Receipt{% endblock %}
+{% block preheader %}Payment received for invoice {{ invoice_number }} — {{ amount|naira }}.{% endblock %}
+{% block content %}
+{{ ui.eyebrow("Subscription receipt") }}
+{{ ui.h1("Thanks — your payment is confirmed") }}
+{{ ui.p("Hi " ~ name ~ ", this is your receipt for " ~ company ~ ".") }}
+{{ ui.amount(amount|naira, "Amount paid") }}
+{{ ui.rows([("Invoice", invoice_number), ("Plan", plan_name ~ " · " ~ seats ~ " staff"), ("Billing", cycle_label), ("Covers", period), ("Paid with", paid_via), ("Date", paid_at)]) }}
+{{ ui.button(link, "View billing") }}
+{% endblock %}

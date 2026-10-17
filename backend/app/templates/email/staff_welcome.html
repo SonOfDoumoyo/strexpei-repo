@@ -1,0 +1,12 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Payroll registration{% endblock %}
+{% block preheader %}{{ company }} will pay your salary to {{ bank_name }} {{ account_masked }}.{% endblock %}
+{% block content %}
+{{ ui.eyebrow("Registration complete") }}
+{{ ui.h1("You're on " ~ company ~ " payroll, " ~ staff_name ~ ".") }}
+{{ ui.p("Your details were received and your bank account was verified. Salary payments from " ~ company ~ " will be sent to the account below, and you'll get an email receipt every time you're paid.") }}
+{{ ui.rows([("Staff ID", staff_code), ("Account name", account_name), ("Bank", bank_name), ("Account", account_masked)]) }}
+{{ ui.notice("You don't need a " ~ app_name ~ " account. If any of these details are wrong or your bank account changes, contact your finance team at " ~ company ~ " to update them.") }}
+{{ ui.small("Keep this email — it confirms the account your employer will pay into.") }}
+{% endblock %}

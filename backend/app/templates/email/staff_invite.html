@@ -1,0 +1,13 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Payroll registration{% endblock %}
+{% block preheader %}Register your bank details for {{ company }} payroll. It takes two minutes.{% endblock %}
+{% block content %}
+{{ ui.eyebrow(company) }}
+{{ ui.h1("Register for payroll in two minutes") }}
+{{ ui.p(manager_name ~ " at " ~ company ~ " uses " ~ app_name ~ " to pay salaries. Open the secure form below, enter the staff ID your employer gave you, and add the bank account you want to be paid into.") }}
+{% if message %}{{ ui.notice("“" ~ message ~ "” — " ~ manager_name) }}{% endif %}
+{{ ui.button(join_url, "Register my details") }}
+{{ ui.rows([("You'll need", "Your staff ID and bank account number"), ("Account required?", "No — just fill the form")]) }}
+{{ ui.small("Only open this link if you work at " ~ company ~ ". " ~ app_name ~ " will never ask for your card details, PIN or password.") }}
+{% endblock %}

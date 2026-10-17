@@ -1,0 +1,29 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Welcome{% endblock %}
+{% block preheader %}Your workspace is ready. Here's how to run your first payroll.{% endblock %}
+{% block content %}
+{{ ui.eyebrow("You're in") }}
+{{ ui.h1("Welcome to " ~ app_name ~ ", " ~ name ~ ".") }}
+{{ ui.p("Your email is confirmed and your workspace is ready. Most teams are paying staff within a day. Here's the path:") }}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 8px 0;">
+  {% for title, text in [
+    ("Create a workgroup", "Name your business and tell us how many staff you're paying."),
+    ("Set up staff IDs", "Upload the IDs you already use, or let us generate a unique ID for each person."),
+    ("Share your link or QR code", "Staff open it, enter their staff ID and bank details — no account needed. We verify every bank account."),
+    ("Fund and pay", "Load your wallet for automatic payday, or pay manually by bank transfer or card when you're ready.")
+  ] %}
+  <tr>
+    <td style="width:34px;vertical-align:top;padding:10px 0;">
+      <span style="display:inline-block;width:24px;height:24px;line-height:24px;border-radius:8px;background-color:#F2E9DA;color:#9A7536;font-size:12px;font-weight:700;text-align:center;">{{ loop.index }}</span>
+    </td>
+    <td style="padding:10px 0;vertical-align:top;">
+      <p style="margin:0;font-size:14px;font-weight:700;color:#151412;">{{ title }}</p>
+      <p style="margin:2px 0 0 0;font-size:13px;line-height:20px;color:#6B6358;">{{ text }}</p>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{{ ui.button(dashboard_url, "Open your dashboard") }}
+{{ ui.small(("Your first " ~ trial_days ~ " days are free. After that, pricing" if trial_days else "Pricing") ~ " is based on the number of staff in each workgroup, plus a " ~ commission_percent ~ " service fee on salaries disbursed.") }}
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Withdrawal {{ number }}{% endblock %}
+{% block preheader %}{% if outcome == "success" %}{{ amount|naira }} has been sent to {{ bank_name }} {{ account_masked }}.{% else %}Your withdrawal of {{ amount|naira }} could not be completed and has been refunded.{% endif %}{% endblock %}
+{% block content %}
+{% if outcome == "success" %}
+{{ ui.eyebrow("Withdrawal complete") }}
+{{ ui.h1("Your money has been sent") }}
+{{ ui.p("Hi " ~ name ~ ", the withdrawal from the " ~ company ~ " wallet was accepted by the receiving bank. It normally shows in the account within minutes.") }}
+{{ ui.amount(amount|naira, "Sent to " ~ account_name) }}
+{% else %}
+{{ ui.eyebrow("Withdrawal not completed") }}
+{{ ui.h1("We couldn't send this withdrawal") }}
+{{ ui.p("Hi " ~ name ~ ", the transfer to your bank did not go through. The full amount, including the transfer fee, is back in the " ~ company ~ " wallet.") }}
+{{ ui.amount((amount + fee)|naira, "Refunded to wallet") }}
+{% endif %}
+{{ ui.rows([("Withdrawal", number), ("Amount", amount|naira), ("Paystack transfer fee", fee|naira if fee else "None"), ("Bank", bank_name), ("Account", account_name ~ " · " ~ account_masked), ("Reason", reason), ("Reference", reference), ("Date", date)]) }}
+{% if outcome == "success" %}
+{{ ui.notice("Didn't ask for this? Change your password straight away and email " ~ support_email ~ ". Withdrawals need your password, so someone else may know it.", "warning") }}
+{% else %}
+{{ ui.notice("Check the account number and bank, then try again. If it keeps failing, email " ~ support_email ~ ".", "warning") }}
+{% endif %}
+{{ ui.button(link, "View wallet") }}
+{% endblock %}

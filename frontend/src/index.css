@@ -1,0 +1,239 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-mode="dark"], [data-mode="dark"] *));
+
+/*
+ * Streixpei tokens. The palette is the original Strexpei identity:
+ * warm shell #F7F3EC, surface #FCFAF6, soft #F2E9DA, line #E1D7C8,
+ * ink #151412 and gold #B8904A — with the landing page's warm-black night
+ * palette (#100E0B / #171411 / gold #C4A15C) as dark mode.
+ */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Bricolage Grotesque", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-shell: var(--c-shell);
+  --color-surface: var(--c-surface);
+  --color-raised: var(--c-raised);
+  --color-soft: var(--c-soft);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-ink: var(--c-ink);
+  --color-ink-2: var(--c-ink-2);
+  --color-ink-3: var(--c-ink-3);
+  --color-brand: var(--c-brand);
+  --color-brand-strong: var(--c-brand-strong);
+  --color-brand-ink: var(--c-brand-ink);
+  --color-brand-soft: var(--c-brand-soft);
+  --color-glow: var(--c-glow);
+  --color-good: var(--c-good);
+  --color-good-soft: var(--c-good-soft);
+  --color-warn: var(--c-warn);
+  --color-warn-soft: var(--c-warn-soft);
+  --color-bad: var(--c-bad);
+  --color-bad-soft: var(--c-bad-soft);
+  --color-series-1: var(--c-series-1);
+  --color-series-2: var(--c-series-2);
+
+  --radius-card: 22px;
+  --shadow-card: 0 1px 0 rgba(28, 21, 14, 0.03), 0 18px 48px -24px rgba(28, 21, 14, 0.18);
+  --shadow-pop: 0 24px 64px -20px rgba(20, 14, 6, 0.35);
+}
+
+:root {
+  --c-shell: #f7f3ec;
+  --c-surface: #fcfaf6;
+  --c-raised: #ffffff;
+  --c-soft: #f2e9da;
+  --c-line: #e1d7c8;
+  --c-line-strong: #d2c4ae;
+  --c-ink: #151412;
+  --c-ink-2: rgba(21, 20, 18, 0.7);
+  --c-ink-3: rgba(21, 20, 18, 0.5);
+  --c-brand: #b8904a;
+  --c-brand-strong: #9a7536;
+  --c-brand-ink: #17120b;
+  --c-brand-soft: #f2e9da;
+  --c-glow: rgba(184, 144, 74, 0.2);
+  --c-good: #23784a;
+  --c-good-soft: rgba(35, 120, 74, 0.1);
+  --c-warn: #a2630b;
+  --c-warn-soft: rgba(201, 138, 27, 0.13);
+  --c-bad: #b23b2b;
+  --c-bad-soft: rgba(178, 59, 43, 0.1);
+  --c-series-1: #a77b35;
+  --c-series-2: #2a78d6;
+  color-scheme: light;
+}
+
+[data-mode="dark"] {
+  --c-shell: #100e0b;
+  --c-surface: #171411;
+  --c-raised: #1d1915;
+  --c-soft: #211c17;
+  --c-line: rgba(255, 255, 255, 0.08);
+  --c-line-strong: rgba(255, 255, 255, 0.15);
+  --c-ink: #f6f1e8;
+  --c-ink-2: rgba(246, 241, 232, 0.7);
+  --c-ink-3: rgba(246, 241, 232, 0.48);
+  --c-brand: #c4a15c;
+  --c-brand-strong: #d0b16e;
+  --c-brand-ink: #17120b;
+  --c-brand-soft: rgba(196, 161, 92, 0.14);
+  --c-glow: rgba(196, 161, 92, 0.22);
+  --c-good: #5fbf8a;
+  --c-good-soft: rgba(95, 191, 138, 0.12);
+  --c-warn: #e3a94a;
+  --c-warn-soft: rgba(227, 169, 74, 0.13);
+  --c-bad: #ef7f6c;
+  --c-bad-soft: rgba(239, 127, 108, 0.12);
+  --c-series-1: #b88a3e;
+  --c-series-2: #3987e5;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: var(--c-shell);
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: var(--c-glow);
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-brand);
+    outline-offset: 2px;
+  }
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .input {
+    height: 2.75rem;
+    width: 100%;
+    border-radius: 0.875rem;
+    border: 1px solid var(--c-line);
+    background: var(--c-raised);
+    padding: 0 0.875rem;
+    font-size: 0.875rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .input::placeholder {
+    color: var(--c-ink-3);
+  }
+  .input:focus {
+    border-color: var(--c-brand);
+    box-shadow: 0 0 0 4px var(--c-glow);
+  }
+  .input[aria-invalid="true"] {
+    border-color: var(--c-bad);
+  }
+  .input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--c-soft) 0%, color-mix(in srgb, var(--c-soft) 55%, var(--c-surface)) 50%, var(--c-soft) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: 0.5rem;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-line-strong) transparent;
+  }
+  .perforated {
+    background-image: radial-gradient(circle at 8px 0, transparent 7px, var(--c-surface) 7.5px);
+    background-size: 16px 8px;
+    background-repeat: repeat-x;
+    height: 8px;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes loader {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-in-right {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes ring {
+  from { stroke-dashoffset: var(--ring-from); }
+}
+
+.animate-pop { animation: pop-in 0.18s ease-out both; }
+.animate-slide { animation: slide-in-right 0.22s ease-out both; }
+.animate-fade { animation: fade-in 0.18s ease-out both; }
+.loader-bar { animation: loader 1.1s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  body { background: #fff !important; color: #151412 !important; }
+  .no-print { display: none !important; }
+  .card { box-shadow: none !important; }
+  .print-only { display: block !important; }
+}
+.print-only { display: none; }

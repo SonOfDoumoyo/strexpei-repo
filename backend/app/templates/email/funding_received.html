@@ -1,0 +1,13 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Wallet receipt{% endblock %}
+{% block preheader %}{{ net|naira }} has been added to the {{ company }} wallet.{% endblock %}
+{% block content %}
+{{ ui.eyebrow("Payment received") }}
+{{ ui.h1("Your wallet has been funded") }}
+{{ ui.p("Hi " ~ name ~ ", we received your payment for " ~ company ~ ".") }}
+{{ ui.amount(net|naira, "Credited to wallet") }}
+{{ ui.rows([("Amount paid", gross|naira), ("Paystack processing fee", fees|naira), ("Credited", net|naira), ("New wallet balance", balance|naira), ("Method", method), ("Reference", reference), ("Date", paid_at)]) }}
+{% if next_step %}{{ ui.notice(next_step, "success") }}{% endif %}
+{{ ui.button(link, link_label|default("View wallet")) }}
+{% endblock %}

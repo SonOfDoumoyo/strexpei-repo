@@ -1,0 +1,12 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Payroll{% endblock %}
+{% block preheader %}Funds confirmed. Disburse payroll {{ run_number }} to {{ staff_count }} staff.{% endblock %}
+{% block content %}
+{{ ui.eyebrow("Funds confirmed · next step") }}
+{{ ui.h1("Payroll " ~ run_number ~ " is ready to disburse") }}
+{{ ui.p("Hi " ~ name ~ ", the funds for " ~ company ~ "'s " ~ period ~ " payroll have been confirmed. Review it one last time and disburse to send salaries to all " ~ staff_count ~ " staff.") }}
+{{ ui.amount(total|naira, "Payroll total") }}
+{{ ui.rows([("Salaries", salaries|naira), ("Transfer fees", fees|naira), (app_name ~ " service fee (" ~ commission_percent ~ ")", commission|naira)]) }}
+{{ ui.button(link, "Review and disburse") }}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Billing{% endblock %}
+{% block preheader %}{{ body }}{% endblock %}
+{% block content %}
+{{ ui.eyebrow(company) }}
+{{ ui.h1(headline) }}
+{{ ui.p("Hi " ~ name ~ ", " ~ body) }}
+{% if amount %}{{ ui.amount(amount|naira, amount_caption|default("Amount due")) }}{% endif %}
+{% if note %}{{ ui.notice(note, tone|default("warning")) }}{% endif %}
+{{ ui.button(link, cta|default("Manage billing")) }}
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Platform alert{% endblock %}
+{% block content %}
+{{ ui.eyebrow("Admin alert") }}
+{{ ui.h1(title) }}
+{{ ui.p(body) }}
+{% if details %}{{ ui.rows(details) }}{% endif %}
+{{ ui.button(frontend_url ~ "/admin", "Open admin console") }}
+{% endblock %}

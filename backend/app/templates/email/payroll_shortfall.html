@@ -1,0 +1,15 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Action needed{% endblock %}
+{% block preheader %}Your wallet is {{ shortfall|naira }} short for {{ period }} payroll.{% endblock %}
+{% block content %}
+{{ ui.eyebrow("Payday is waiting") }}
+{{ ui.h1("Fund your wallet to pay staff") }}
+{{ ui.p("Hi " ~ name ~ ", " ~ company ~ "'s " ~ period ~ " payroll is prepared but the wallet doesn't have enough to cover it. As soon as the shortfall arrives we'll " ~ ("disburse automatically" if automatic else "let you know so you can disburse") ~ ".") }}
+{{ ui.amount(shortfall|naira, "Amount still needed") }}
+{{ ui.rows([("Payroll total", total|naira), ("Wallet balance", balance|naira), ("Staff", staff_count)]) }}
+{% if dva_account_number %}
+{{ ui.notice("Fastest option: transfer " ~ (transfer_amount|naira) ~ " to " ~ dva_bank_name ~ " · " ~ dva_account_number ~ " (" ~ dva_account_name ~ "). It reflects within minutes and includes the bank transfer fee.", "warning") }}
+{% endif %}
+{{ ui.button(link, "Fund payroll now") }}
+{% endblock %}

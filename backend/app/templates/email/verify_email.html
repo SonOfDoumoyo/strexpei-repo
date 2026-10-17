@@ -1,0 +1,12 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Account security{% endblock %}
+{% block preheader %}Confirm your email to activate your {{ app_name }} workspace.{% endblock %}
+{% block content %}
+{{ ui.eyebrow("Confirm your email") }}
+{{ ui.h1("One quick step, " ~ name ~ ".") }}
+{{ ui.p("Thanks for creating a " ~ app_name ~ " account. Confirm this is your email address so we can secure your workspace and send you payroll receipts.") }}
+{{ ui.button(verify_url, "Confirm email address") }}
+{{ ui.notice("This link expires in 24 hours. If you didn't create a " ~ app_name ~ " account, you can safely ignore this email — nothing will be set up.") }}
+{{ ui.small("Button not working? Paste this link into your browser: " ~ verify_url) }}
+{% endblock %}

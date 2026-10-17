@@ -1,0 +1,68 @@
+{% import "_macros.html" as ui %}
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>{{ subject }}</title>
+<style>
+  body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; }
+  a { color: #9A7536; }
+  @media only screen and (max-width: 620px) {
+    .container { width: 100% !important; }
+    .px { padding-left: 24px !important; padding-right: 24px !important; }
+    .h1 { font-size: 24px !important; line-height: 30px !important; }
+    .amount { font-size: 30px !important; }
+    .stack { display: block !important; width: 100% !important; text-align: left !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#F7F3EC;">
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">{% block preheader %}{{ preheader|default('') }}{% endblock %}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F7F3EC;">
+  <tr>
+    <td align="center" style="padding:36px 12px 28px 12px;">
+      <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
+        <tr>
+          <td style="padding:0 6px 18px 6px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:17px;font-weight:800;letter-spacing:0.24em;color:#151412;">
+                  <span style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:7px;background-color:#151412;color:#C4A15C;font-size:12px;font-weight:800;letter-spacing:0;text-align:center;vertical-align:middle;margin-right:8px;">S</span><span style="vertical-align:middle;">STREIXPEI</span>
+                </td>
+                <td align="right" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#9A8F7F;">
+                  {% block label %}Payroll operations{% endblock %}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#FFFFFF;border:1px solid #E1D7C8;border-radius:20px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr><td style="height:4px;line-height:4px;font-size:0;background-color:#B8904A;border-radius:20px 20px 0 0;">&nbsp;</td></tr>
+              <tr>
+                <td class="px" style="padding:38px 44px 36px 44px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#151412;font-size:15px;line-height:24px;">
+                  {% block content %}{% endblock %}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 18px 0 18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:19px;color:#9A8F7F;text-align:center;">
+            {% block footer_note %}{% endblock %}
+            <p style="margin:0 0 6px 0;">{{ app_name }} is a product of {{ company_name }}.</p>
+            <p style="margin:0 0 6px 0;">Need help? Reply to this email or write to <a href="mailto:{{ support_email }}" style="color:#9A7536;text-decoration:underline;">{{ support_email }}</a>.</p>
+            <p style="margin:0;color:#B3A998;">&copy; {{ year }} {{ company_name }}. All rights reserved.</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

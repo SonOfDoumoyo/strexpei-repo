@@ -1,0 +1,13 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Payday reminder{% endblock %}
+{% block preheader %}{{ company }} payday is {{ when }}. {{ status_line }}{% endblock %}
+{% block content %}
+{{ ui.eyebrow("Payday " ~ when) }}
+{{ ui.h1(headline) }}
+{{ ui.p("Hi " ~ name ~ ", payday for " ~ company ~ " is on " ~ payday_date ~ ". " ~ status_line) }}
+{{ ui.rows([("Payment mode", mode_label), ("Estimated payroll", estimated_total|naira), ("Wallet balance", balance|naira), ("Staff ready to pay", ready_count ~ " of " ~ staff_count)]) }}
+{% if needs_funding %}{{ ui.notice("Top up at least " ~ (shortfall|naira) ~ " before payday so nobody is paid late.", "warning") }}{% endif %}
+{% if not_ready %}{{ ui.notice(not_ready ~ " staff can't be paid yet — they're missing a salary or haven't registered their bank details.") }}{% endif %}
+{{ ui.button(link, cta) }}
+{% endblock %}

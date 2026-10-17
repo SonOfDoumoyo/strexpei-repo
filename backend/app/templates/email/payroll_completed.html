@@ -1,0 +1,17 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Payroll report{% endblock %}
+{% block preheader %}{{ paid_count }} of {{ staff_count }} staff paid · {{ paid_amount|naira }} disbursed.{% endblock %}
+{% block content %}
+{{ ui.eyebrow(period ~ " payroll") }}
+{{ ui.h1(outcome_title) }}
+{{ ui.p("Hi " ~ name ~ ", here is the summary for payroll " ~ run_number ~ " at " ~ company ~ ".") }}
+{{ ui.amount(paid_amount|naira, "Disbursed to staff") }}
+{{ ui.rows([("Staff paid", paid_count ~ " of " ~ staff_count), ("Failed transfers", failed_count if failed_count else ""), ("Refunded to wallet", (refunded|naira) if refunded else ""), ("Disbursed on", completed_at)]) }}
+{% if failed_count %}
+{{ ui.notice(failed_count ~ " transfer(s) could not be completed, usually because a bank account rejected the payment. The full amount for those staff, including fees, was returned to your wallet. Open the payroll to see reasons and retry.", "warning") }}
+{% else %}
+{{ ui.notice("Every staff member has been paid and sent an email receipt.", "success") }}
+{% endif %}
+{{ ui.button(link, "View payroll report") }}
+{% endblock %}

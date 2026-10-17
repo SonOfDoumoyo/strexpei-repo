@@ -1,0 +1,10 @@
+{% extends "_base.html" %}
+{% import "_macros.html" as ui %}
+{% block label %}Onboarding{% endblock %}
+{% block preheader %}All {{ count }} staff in {{ company }} have registered and their accounts are verified.{% endblock %}
+{% block content %}
+{{ ui.eyebrow("Onboarding complete") }}
+{{ ui.h1("Everyone in " ~ company ~ " has registered") }}
+{{ ui.p("Hi " ~ name ~ ", all " ~ count ~ " staff IDs have been claimed and every bank account has been verified. Set salaries if you haven't, then you're ready for payday.") }}
+{{ ui.button(link, "Review staff and salaries") }}
+{% endblock %}
